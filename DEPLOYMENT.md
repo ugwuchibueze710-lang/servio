@@ -25,7 +25,7 @@ This repo includes `render.yaml` at the project root, ready to use as a
 1. Push this repo to GitHub (or GitLab).
 2. In the Render dashboard: **New > Blueprint**, point it at the repo.
 3. Render reads `render.yaml` and creates a single web service (`servio`) with the build command
-   `yarn install && yarn build` and start command `yarn start`.
+   `yarn install --production=false && yarn build` and start command `yarn start`.
 4. Fill in the env vars Render prompts for (everything marked `sync: false` in `render.yaml` - these
    are secrets and are intentionally not committed to git).
 5. After the first deploy, note the assigned `*.onrender.com` URL (or attach your own domain under
@@ -42,6 +42,8 @@ logs: `error Your lockfile needs to be updated, but yarn was run with --frozen-l
 rather keep frozen-lockfile for reproducible builds, run `yarn install` locally once (regenerating
 `yarn.lock` with the puppeteer entry), commit the updated lockfile, then restore
 `buildCommand: yarn install --frozen-lockfile && yarn build` in `render.yaml`.
+
+Second, unrelated build failure hit after that fix: `Cannot find module 'bfj'` during `node scripts/build.js`. Cause: `bfj` (and other build-time tooling) sits in `devDependencies`, and `render.yaml` sets `NODE_ENV=production` as a build-time env var - Yarn Classic silently skips all devDependencies whenever `NODE_ENV=production` is set during `yarn install`, even though this is a build script's own dependency, not a runtime one. Fixed by adding `--production=false` to force yarn to install devDependencies regardless of `NODE_ENV`. If you see a similar `Cannot find module 'X'` error during a future build, check whether X is a devDependency needed by a build/start script - this same flag already covers that class of bug.
 
 `render.yaml` is currently set to Render's **free** plan (no card required) so you can stand this
 up and wire in credentials without committing to a paid plan yet. Free web services spin down

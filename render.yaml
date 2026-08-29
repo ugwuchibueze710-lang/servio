@@ -19,7 +19,7 @@ services:
     plan: free # NOTE: Render free web services spin down after 15 min idle and cold-start on the next request. Fine for setup/testing - bump to starter/standard/pro before real launch traffic (Render pricing page).
     region: ohio # closest Render region to western KY / southern IN; change if you deploy elsewhere
     branch: main
-    buildCommand: yarn install && yarn build
+    buildCommand: yarn install --production=false && yarn build
     startCommand: yarn start
     healthCheckPath: /
     autoDeploy: true
