@@ -33,8 +33,13 @@ This repo includes `render.yaml` at the project root, ready to use as a
    redeploy.
 6. Render terminates HTTPS for you automatically on both the default domain and custom domains.
 
-Render's Starter plan is fine to validate the launch; move to Standard/Pro once you have real
-production traffic (SSR is more CPU-intensive per request than a static site).
+`render.yaml` is currently set to Render's **free** plan (no card required) so you can stand this
+up and wire in credentials without committing to a paid plan yet. Free web services spin down
+after 15 minutes of inactivity and cold-start on the next request - fine for setup and testing,
+not for real users. Before real launch traffic, change `plan: free` to `plan: starter` in
+`render.yaml` (or switch it in the Render dashboard under the service's Settings), and move to
+Standard/Pro once you have production traffic (SSR is more CPU-intensive per request than a
+static site).
 
 ## Option B: Any other Node host (Railway, Fly.io, a VPS, etc.)
 
