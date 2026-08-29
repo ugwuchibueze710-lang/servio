@@ -1,0 +1,116 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  position: relative;
+}
+
+.mapPane {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Map-first layout with a bottom control sheet, per the spec's UI quality
+   standard (section 24) - the map is the dominant element, ride controls
+   float in a sheet rather than competing with it for space. */
+.controlPane {
+  flex: 0 0 auto;
+  background: var(--colorWhite, #fff);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
+  padding: 20px 20px 28px;
+  position: relative;
+  z-index: 2;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+
+.destinationInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--colorGrey100, #e1e1e1);
+  font-size: 16px;
+}
+
+.predictions {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 1px solid var(--colorGrey100, #e1e1e1);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.predictions li {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.predictions li:hover {
+  background: var(--colorGrey50, #f7f7f7);
+}
+
+.fareCard {
+  margin-top: 16px;
+}
+
+.fareAmount {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 4px 0;
+}
+
+.fareDetail {
+  color: var(--colorGrey600, #4a4a4a);
+  margin: 0 0 12px;
+}
+
+.primaryButton {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--colorGrey200, #d1d1d1);
+  background: transparent;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.statusCard {
+  text-align: center;
+}
+
+.tripStatusLabel {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.errorText {
+  color: #b91c1c;
+  margin-top: 12px;
+}

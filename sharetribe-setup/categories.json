@@ -1,0 +1,241 @@
+{
+  "categories": [
+    {
+      "id": "ride",
+      "name": "Ride",
+      "subcategories": []
+    },
+    {
+      "id": "home-improvement",
+      "name": "Home Improvement",
+      "subcategories": [
+        {
+          "id": "carpentry",
+          "name": "Carpentry",
+          "subcategories": []
+        },
+        {
+          "id": "flooring",
+          "name": "Flooring",
+          "subcategories": []
+        },
+        {
+          "id": "drywall-repair",
+          "name": "Drywall repair",
+          "subcategories": []
+        },
+        {
+          "id": "remodeling",
+          "name": "Remodeling",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "cleaning",
+      "name": "Cleaning",
+      "subcategories": [
+        {
+          "id": "house-cleaning",
+          "name": "House cleaning",
+          "subcategories": []
+        },
+        {
+          "id": "deep-cleaning",
+          "name": "Deep cleaning",
+          "subcategories": []
+        },
+        {
+          "id": "move-in-move-out-cleaning",
+          "name": "Move-in / move-out cleaning",
+          "subcategories": []
+        },
+        {
+          "id": "carpet-cleaning",
+          "name": "Carpet cleaning",
+          "subcategories": []
+        },
+        {
+          "id": "window-cleaning",
+          "name": "Window cleaning",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "landscaping",
+      "name": "Landscaping",
+      "subcategories": [
+        {
+          "id": "landscape-design",
+          "name": "Landscape design",
+          "subcategories": []
+        },
+        {
+          "id": "mulching",
+          "name": "Mulching",
+          "subcategories": []
+        },
+        {
+          "id": "tree-trimming",
+          "name": "Tree trimming",
+          "subcategories": []
+        },
+        {
+          "id": "irrigation",
+          "name": "Irrigation",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "plumbing",
+      "name": "Plumbing",
+      "subcategories": []
+    },
+    {
+      "id": "electrical",
+      "name": "Electrical",
+      "subcategories": []
+    },
+    {
+      "id": "hvac",
+      "name": "HVAC",
+      "subcategories": []
+    },
+    {
+      "id": "moving",
+      "name": "Moving",
+      "subcategories": [
+        {
+          "id": "local-moving",
+          "name": "Local moving",
+          "subcategories": []
+        },
+        {
+          "id": "packing-services",
+          "name": "Packing services",
+          "subcategories": []
+        },
+        {
+          "id": "furniture-delivery",
+          "name": "Furniture delivery",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "auto-services",
+      "name": "Auto Services",
+      "subcategories": [
+        {
+          "id": "auto-detailing",
+          "name": "Auto detailing",
+          "subcategories": []
+        },
+        {
+          "id": "mobile-mechanic",
+          "name": "Mobile mechanic",
+          "subcategories": []
+        },
+        {
+          "id": "car-wash",
+          "name": "Car wash",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "photography",
+      "name": "Photography",
+      "subcategories": []
+    },
+    {
+      "id": "events",
+      "name": "Events",
+      "subcategories": [
+        {
+          "id": "event-planning",
+          "name": "Event planning",
+          "subcategories": []
+        },
+        {
+          "id": "catering",
+          "name": "Catering",
+          "subcategories": []
+        },
+        {
+          "id": "dj-services",
+          "name": "DJ services",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "beauty",
+      "name": "Beauty",
+      "subcategories": []
+    },
+    {
+      "id": "pet-services",
+      "name": "Pet Services",
+      "subcategories": [
+        {
+          "id": "pet-grooming",
+          "name": "Pet grooming",
+          "subcategories": []
+        },
+        {
+          "id": "pet-sitting",
+          "name": "Pet sitting",
+          "subcategories": []
+        },
+        {
+          "id": "dog-walking",
+          "name": "Dog walking",
+          "subcategories": []
+        }
+      ]
+    },
+    {
+      "id": "technology",
+      "name": "Technology",
+      "subcategories": []
+    },
+    {
+      "id": "tutoring",
+      "name": "Tutoring",
+      "subcategories": []
+    },
+    {
+      "id": "personal-services",
+      "name": "Personal Services",
+      "subcategories": []
+    },
+    {
+      "id": "business-services",
+      "name": "Business Services",
+      "subcategories": []
+    },
+    {
+      "id": "handyman",
+      "name": "Handyman",
+      "subcategories": []
+    },
+    {
+      "id": "lawn-care",
+      "name": "Lawn Care",
+      "subcategories": []
+    },
+    {
+      "id": "pressure-washing",
+      "name": "Pressure Washing",
+      "subcategories": []
+    },
+    {
+      "id": "painting",
+      "name": "Painting",
+      "subcategories": []
+    }
+  ]
+}

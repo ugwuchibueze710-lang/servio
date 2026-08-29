@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "RideDriverAccepted.Subject" "Your driver is on the way"}}

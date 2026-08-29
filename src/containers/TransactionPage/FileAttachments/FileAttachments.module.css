@@ -1,0 +1,109 @@
+@import '../../../styles/customMediaQueries.css';
+
+.container {
+  margin: 42px 24px 0 24px;
+
+  @media (--viewportMedium) {
+    padding: 7px 0 1px 0;
+    margin: 40px 24px 0 24px;
+  }
+  @media (--viewportLarge) {
+    margin: 24px 0 0 0;
+  }
+}
+
+.sectionHeading {
+  composes: p from global;
+  margin: 16px 0 0 0;
+  font-weight: var(--fontWeightBold);
+  padding: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 8px 0 0 0;
+  padding: 0;
+}
+
+/* FileAttachmentItem base styles */
+
+.fileAttachment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  cursor: default;
+
+  /* Reset native button styles when this element is a <button> */
+  appearance: none;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+}
+
+.fileAttachmentAvailable {
+  cursor: pointer;
+}
+
+.fileAttachmentIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.fileAttachmentIconDefault {
+  color: var(--colorGrey600);
+}
+
+.fileAttachmentStatus {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fileAttachmentError {
+  color: var(--colorFail);
+}
+
+.fileAttachmentItem {
+  min-width: 0;
+}
+
+@keyframes downloadFallbackEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 0.85;
+    transform: translateY(0);
+  }
+}
+
+.downloadFallback {
+  composes: marketplaceTinyFontStyles from global;
+  margin: 4px 0 12px 24px;
+  color: inherit;
+  opacity: 0;
+
+  /* animation shorthand property doesn't work with local scope of CSS Modules */
+  animation-duration: 0.3s;
+  animation-name: downloadFallbackEnter;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+
+  @media (--viewportMedium) {
+    margin: 8px 0 16px 24px;
+  }
+}
+
+.downloadFallbackLink {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: var(--fontWeightBold);
+
+  &:hover {
+    text-decoration: none;
+  }
+}

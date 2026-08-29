@@ -1,0 +1,120 @@
+/**
+ * Error logging for the Sharetribe Web Template's server. Can be used to
+ * strap on an external error logging service like Sentry
+ * or just plain printing errors to the log.
+ */
+
+const Sentry = require('@sentry/node');
+
+const ENV = process.env.REACT_APP_ENV;
+const SENTRY_DSN = process.env.REACT_APP_SENTRY_DSN;
+const VERBOSE = process.env.VERBOSE === 'true';
+const DEV = process.env.REACT_APP_ENV === 'development';
+
+const ingoreErrorsMap = {
+  ['AxiosError: Network Error']: true,
+};
+
+const pickSelectedErrors = (ignored, entry) => {
+  const [key, value] = entry;
+  return value === true ? [...ignored, key] : ignored;
+};
+
+// Initialize Sentry ~ the way their suggested approach using instrument.js would have done it.
+if (SENTRY_DSN) {
+  const ignoreErrors = Object.entries(ingoreErrorsMap).reduce(pickSelectedErrors, []);
+
+  // Configure the Sentry client. As is, this catches unhandled
+  // exceptions from starting the server etc. but does not catch the
+  // ones thrown from Express.js middleware functions. For those
+  // an error handler has to be added to the Express app.
+  Sentry.init({ dsn: SENTRY_DSN, environment: ENV, ignoreErrors });
+}
+
+/**
+ * Returns a Sentry error handler in case
+ * Sentry client is set up.
+ */
+exports.setupExpressErrorHandler = app => {
+  if (SENTRY_DSN) {
+    Sentry.setupExpressErrorHandler(app);
+  }
+};
+
+const responseAPIErrors = error => {
+  if (!error) {
+    return [];
+  }
+  // SDK / Axios errors attach Marketplace API errors under data.errors
+  if (error?.data?.errors) {
+    return error.data.errors;
+  }
+  // storableError() plain objects use apiErrors
+  if (error.apiErrors) {
+    return error.apiErrors;
+  }
+  return [];
+};
+
+const responseApiErrorInfo = err =>
+  responseAPIErrors(err).map(e => ({
+    status: e.status,
+    code: e.code,
+    meta: e.meta,
+    details: e.details,
+  }));
+
+/**
+ * Sentry truncates nested plain objects in extra.__serialized__ (normalizeDepth),
+ * which turns apiErrors into useless "[Object]" strings. Always capture a real Error.
+ */
+const toCapturableError = e => {
+  if (e instanceof Error) {
+    return e;
+  }
+  const err = new Error(e?.message || 'Unknown error');
+  err.name = e?.name || 'Error';
+  if (e?.status != null) {
+    err.status = e.status;
+  }
+  if (e?.statusText != null) {
+    err.statusText = e.statusText;
+  }
+  return err;
+};
+
+/**
+ * Logs a error. If Sentry client is set up
+ * passes the error to that. Otherwise prints
+ * the error to `console.error`.
+ *
+ * @param {Error} e Error that occurred
+ * @param {String} code Error code
+ * @param {Object} data Additional data to be sent to Sentry
+ * @param {Object} [options]
+ * @param {boolean} [options.skipSentry] If true, skip Sentry and only log to stdout
+ */
+exports.error = (e, code, data, options = {}) => {
+  const { skipSentry = false } = options;
+  if (SENTRY_DSN && !skipSentry) {
+    const extra = { ...data, apiErrorData: responseApiErrorInfo(e) };
+
+    Sentry.withScope(scope => {
+      scope.setTag('code', code);
+      Object.keys(extra).forEach(key => {
+        scope.setExtra(key, extra[key]);
+      });
+      Sentry.captureException(toCapturableError(e));
+    });
+  }
+  // Let's log always to stdout
+  console.error(e);
+  console.error(code);
+  console.error(data);
+};
+
+exports.devLogger = (...args) => {
+  if (DEV && VERBOSE) {
+    console.log(...args); // eslint-disable-line no-console
+  }
+};

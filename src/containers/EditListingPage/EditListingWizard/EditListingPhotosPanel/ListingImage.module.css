@@ -1,0 +1,152 @@
+.root {
+  display: block;
+  float: left;
+  position: relative;
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+  background-color: var(--colorGrey100); /* Loading BG color */
+}
+
+.wrapper {
+  position: relative;
+}
+
+.controlsGroup {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+}
+
+.controlButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 33px;
+  height: 33px;
+  padding: 0;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+
+  & svg {
+    fill: var(--colorWhite);
+  }
+
+  &:focus {
+    z-index: 1;
+  }
+
+  @media (hover: hover) {
+    &:hover svg {
+      opacity: 0.5;
+    }
+  }
+
+  &[aria-disabled='true'] {
+    cursor: not-allowed;
+
+    & svg {
+      opacity: 0.2;
+    }
+  }
+}
+
+.controlButton[data-drag-handle] {
+  /* Use move as a fallback if grab is unsupported */
+  cursor: move;
+  cursor: grab;
+}
+
+.grabbingCursor {
+  /* Use move as a fallback if grab is unsupported */
+  cursor: move;
+  cursor: grabbing;
+}
+
+/* Beats .controlButton[data-drag-handle] above on specificity (two classes
+   + an attribute selector outweighs one class + an attribute selector), so
+   this reliably wins regardless of source order - no !important needed. */
+.controlButton[data-drag-handle].grabbingCursor {
+  cursor: move;
+  cursor: grabbing;
+}
+
+/* These three are positional modifiers, not tied to a specific button - if a
+   button is added to or reordered within this row, move these classes to
+   whichever buttons actually end up first/middle/last. */
+.controlButtonFirst {
+  border-top-left-radius: var(--borderRadiusMedium);
+  border-bottom-left-radius: var(--borderRadiusMedium);
+}
+
+.controlButtonLast {
+  border-top-right-radius: var(--borderRadiusMedium);
+  border-bottom-right-radius: var(--borderRadiusMedium);
+}
+
+.controlButtonMiddle {
+  border-radius: 0;
+}
+
+.removeImage {
+  /* Centered in the 33px button box: (33 - 13) / 2 = 10. */
+  & svg {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 13px;
+    height: 13px;
+  }
+}
+
+.coverBadge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background-color: var(--colorGrey900);
+  color: var(--colorWhite);
+  font-size: 14px;
+  line-height: 16px;
+  border-radius: var(--borderRadiusMedium);
+}
+
+.rootForImage {
+  /* Layout - image will take space defined by aspect ratio wrapper */
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--borderRadiusMedium);
+  pointer-events: none;
+}
+
+.thumbnailLoading {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(211, 211, 211, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fallbackWhileDownloading {
+  position: absolute;
+  top: 0;
+}

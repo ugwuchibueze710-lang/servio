@@ -1,0 +1,45 @@
+/**
+ * English labels for the invoice PDF templates (ported from Billzy's
+ * backend/src/i18n/locales/en.json). Billzy supports multiple locales for this label set; SERVIO
+ * only needs English at launch, so only that set was ported. If SERVIO adds more site languages
+ * later, add sibling label objects here and select one by the transaction/customer locale.
+ */
+module.exports = {
+  invoiceTitle: 'Invoice',
+  invoiceNumberLabel: 'Invoice Number',
+  invoiceNumberShortLabel: 'Invoice #',
+  invoiceDateLabel: 'Invoice Date',
+  dateLabel: 'Date',
+  dueDateLabel: 'Due Date',
+  dueShortLabel: 'Due',
+  referenceLabel: 'Reference',
+  billToHeading: 'Bill To',
+  itemsHeading: 'Invoice Details',
+  itemHeaderDescription: 'Description',
+  itemHeaderQuantity: 'Quantity',
+  itemHeaderQuantityShort: 'Qty',
+  itemHeaderUnit: 'Unit',
+  itemHeaderUnitPrice: 'Unit Price',
+  itemHeaderUnitPriceShort: 'Rate',
+  itemHeaderAmount: 'Amount',
+  itemHeaderTax: 'Tax',
+  summaryHeading: 'Invoice Summary',
+  subtotalLabel: 'Subtotal',
+  discountLabel: 'Discount',
+  taxLabel: 'Tax',
+  totalLabel: 'Total',
+  statusLabel: 'Status',
+  taxSummaryHeading: 'Tax Summary',
+  taxableLabel: 'Taxable',
+  taxAmountLabel: 'Tax Amount',
+  taxIdLabel: 'Tax ID',
+  outstandingBalanceLabel: 'Outstanding Balance',
+  paymentInformationHeading: 'Payment Information',
+  paymentMethodsLabel: 'Payment Methods',
+  paymentMethodsPrefix: 'Methods:',
+  bankAccountLabel: 'Bank Account',
+  bankAccountPrefix: 'Bank:',
+  paymentTermsLabel: 'Payment Terms',
+  notesHeading: 'Notes',
+  thankYouNote: 'Thank you for your business!',
+};

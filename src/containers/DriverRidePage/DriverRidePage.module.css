@@ -1,0 +1,84 @@
+.root {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.statusLabel {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.onlineToggle,
+.onlineToggleActive {
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.onlineToggle {
+  background: #16a34a;
+  color: #fff;
+}
+
+.onlineToggleActive {
+  background: #dc2626;
+  color: #fff;
+}
+
+.requestCard,
+.tripCard {
+  border: 1px solid var(--colorGrey100, #e1e1e1);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.requestTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.requestActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.primaryButton {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--colorGrey200, #d1d1d1);
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+}

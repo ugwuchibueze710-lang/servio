@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "RideTripPayout.Subject" "Your ride earnings have been paid out"}}

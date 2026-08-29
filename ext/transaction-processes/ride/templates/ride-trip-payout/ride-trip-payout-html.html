@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en">
+  {{set-translations (asset "content/email-texts.json")}}
+  {{set-locale (asset "general/localization.json" "locale" "en_US")}}
+  <head>
+    <meta http-equiv="Content-Type" content="text/html charset=UTF-8" />
+  </head>
+  {{#with transaction}}
+  <table style="background-color:#FFF;margin:0 auto;padding:24px 12px 0;font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif" align="center" border="0" cellPadding="0" cellSpacing="0" role="presentation" width="100%">
+    <tbody>
+      <tr>
+        <td>
+          <table align="center" role="presentation" cellSpacing="0" cellPadding="0" border="0" width="100%" style="max-width:600px;margin:0 auto">
+            <tr style="width:100%">
+              <td>
+                <h1 style="color:#484848;font-size:24px;line-height:1.3;font-weight:700">{{t "RideTripPayout.Title" "You've been paid for your last ride"}}</h1>
+                <p style="font-size:16px;line-height:1.4;margin:16px 0;color:#484848">{{t "RideTripPayout.Body" "Your payout for the ride with {customerDisplayName} has been sent to your connected payout account. You can review your full earnings history in the Servio driver dashboard." customerDisplayName=customer.display-name}}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  {{/with}}
+</html>

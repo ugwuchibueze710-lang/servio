@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Page not found - SERVIO</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+        -webkit-font-smoothing: antialiased; /* http://szafranek.net/blog/2009/02/22/font-smoothing-explained/ */
+        -moz-osx-font-smoothing: grayscale; /* http://szafranek.net/blog/2009/02/22/font-smoothing-explained/ */
+        text-rendering: optimizeSpeed;
+
+        background-color: var(--matterColorBright, #F6F7F5);
+        margin: 0;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 20px;
+        letter-spacing: 0.5px;
+        color: #0B1220;
+        padding-top: 40px;
+      }
+
+      .brand .mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: linear-gradient(135deg, #0E7490, #0B5A70);
+        display: inline-block;
+        position: relative;
+      }
+
+      .brand .mark::after {
+        content: '';
+        position: absolute;
+        left: 8px;
+        top: 13px;
+        width: 10px;
+        height: 5px;
+        border-left: 3px solid #fff;
+        border-bottom: 3px solid #fff;
+        transform: rotate(-45deg);
+      }
+
+      h1 {
+        font-weight: 700;
+        font-size: 30px;
+        line-height: 36px;
+        letter-spacing: -0.5px;
+        color: #4A4A4A;
+        margin-top: 24px;
+        margin-bottom: 24px;
+      }
+
+      .content {
+        max-width: 709px;
+        margin: 16vw 24px;
+        text-align: center;
+      }
+
+      .errorCode {
+        font-weight: 700;
+        font-size: 48px;
+        line-height: 54px;
+        letter-spacing: -1px;
+        color: #C0392B;
+        margin-top: 24px;
+        margin-bottom: 24px;
+      }
+
+      .buttonLink {
+        /* Dimensions */
+        display: block;
+        max-width: 360px;
+        margin: 46px auto 0 auto;
+        padding: 20px 0;
+
+
+        /* Font */
+        font-weight: 600;
+        font-size: 18px;
+        line-height: 24px;
+        letter-spacing: -0.3px;
+
+        /* Borders */
+        border-radius: 2px;
+        border-width: 1px;
+        border-style: solid;
+        border-color: #E7E7E7;
+
+        /* Colors */
+        background-color: #FFFFFF;
+        color: #4A4A4A;
+
+        /* Text */
+        text-align: center;
+        text-decoration: none;
+
+        /* Effects */
+        transition: all ease-in-out 0.1s;
+        cursor: pointer;
+      }
+      .buttonLink:hover,
+      .buttonLink:focus {
+        outline: none;
+        text-decoration: none;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.10);
+        border-color: #B2B2B2;
+      }
+
+      @media (min-width: 768px) {
+        h1 {
+          font-weight: 600;
+          line-height: 40px;
+          letter-spacing: -0.9px;
+        }
+
+        .content {
+          margin: 232px auto;
+        }
+
+        .errorCode {
+          font-size: 90px;
+          line-height: 96px;
+          letter-spacing: -2px;
+          margin-top: 32px;
+          margin-bottom: 32px;
+        }
+        .buttonLink {
+          margin: 66px auto 0 auto;
+        }
+      }
+    </style>
+
+  </head>
+  <body>
+    <div class="brand"><span class="mark"></span>SERVIO</div>
+    <div class="content">
+      <div class="errorCode">404</div>
+      <h1>Sorry, we couldn't find that page.</h1>
+      <a class="buttonLink" href="/">Go to homepage</a>
+    </div>
+  </body>
+</html>

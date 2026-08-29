@@ -1,0 +1,286 @@
+;; Servio Ride transaction process.
+;;
+;; Companion to src/ride/rideProcess.js (kept in sync manually, same as the
+;; existing default-booking/default-purchase pairs with their
+;; src/transactions/transactionProcess*.js files). See the header comment
+;; in rideProcess.js for why this graph is shaped the way it is (driver
+;; selection happens before transaction creation; a transaction never
+;; changes which listing/provider it belongs to).
+;;
+;; Every action below is a real, existing Sharetribe Flex process action -
+;; confirmed by grepping the actions actually used in this marketplace's
+;; other four processes (default-booking, default-purchase, default-
+;; negotiation, default-inquiry) rather than invented for this process.
+;; This process deliberately does NOT use :action/create-pending-booking or
+;; :action/create-pending-stock-reservation: Ride is neither a calendar
+;; booking nor a countable-stock good, so Sharetribe's built-in
+;; availability/stock reservation systems don't apply. Preventing a driver
+;; from being double-booked is instead enforced by our own server code
+;; (server/api-util/rideDispatch.js) before a transaction is even created -
+;; see that file and RIDE_INTEGRATION_REPORT.md section 5/22 for the
+;; concurrency caveat this implies and how Phase 3 testing should harden it.
+;;
+;; BEFORE PUSHING THIS TO CONSOLE: validate with
+;;   flex-cli process push --process=ride --path=ext/transaction-processes/ride --marketplace=<your-marketplace-env> --dry-run
+;; and read the output carefully - see DEPLOYMENT_RIDE.md for the full
+;; command sequence. Sharetribe's own process validator is the actual
+;; source of truth on whether this EDN is well-formed; this file has not
+;; been run through it in this environment (no flex-cli / API credentials
+;; available here - see the integration report).
+{:format :v3,
+ :transitions
+ [{:name :transition/ride-request-payment,
+   :actor :actor.role/customer,
+   :privileged? true,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/privileged-set-line-items}
+    {:name :action/stripe-create-payment-intent}],
+   :to :state/pending-payment}
+
+  {:name :transition/ride-expire-payment,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/pending-payment]}
+     {:fn/period ["PT10M"]}]},
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/pending-payment,
+   :to :state/payment-expired}
+
+  {:name :transition/ride-confirm-payment,
+   :actor :actor.role/customer,
+   :actions [{:name :action/stripe-confirm-payment-intent}],
+   :from :state/pending-payment,
+   :to :state/awaiting-driver-acceptance}
+
+  {:name :transition/ride-driver-accept,
+   :actor :actor.role/provider,
+   ;; Marked privileged not because of money, but so the client can't skip
+   ;; the server-side "take this driver off the market" side effect - see
+   ;; isPrivileged's comment in src/ride/rideProcess.js and spec section 22.
+   :privileged? true,
+   :actions [{:name :action/privileged-update-metadata}],
+   :from :state/awaiting-driver-acceptance,
+   :to :state/driver-assigned}
+
+  {:name :transition/ride-driver-decline,
+   :actor :actor.role/provider,
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/awaiting-driver-acceptance,
+   :to :state/no-driver-response}
+
+  {:name :transition/ride-driver-timeout,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/awaiting-driver-acceptance]}
+     {:fn/period ["PT25S"]}]},
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/awaiting-driver-acceptance,
+   :to :state/no-driver-response}
+
+  {:name :transition/ride-cancel-by-rider-free,
+   :actor :actor.role/customer,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/awaiting-driver-acceptance,
+   :to :state/cancelled-by-rider}
+
+  {:name :transition/ride-driver-en-route,
+   :actor :actor.role/provider,
+   :actions [],
+   :from :state/driver-assigned,
+   :to :state/driver-en-route-to-pickup}
+
+  {:name :transition/ride-cancel-by-rider-with-fee-from-assigned,
+   :actor :actor.role/customer,
+   :privileged? true,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/privileged-set-line-items}
+    {:name :action/stripe-capture-payment-intent}
+    {:name :action/stripe-create-payout}],
+   :from :state/driver-assigned,
+   :to :state/cancelled-by-rider-with-fee}
+
+  {:name :transition/ride-cancel-by-rider-with-fee-from-en-route,
+   :actor :actor.role/customer,
+   :privileged? true,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/privileged-set-line-items}
+    {:name :action/stripe-capture-payment-intent}
+    {:name :action/stripe-create-payout}],
+   :from :state/driver-en-route-to-pickup,
+   :to :state/cancelled-by-rider-with-fee}
+
+  {:name :transition/ride-cancel-by-rider-with-fee-from-arrived,
+   :actor :actor.role/customer,
+   :privileged? true,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/privileged-set-line-items}
+    {:name :action/stripe-capture-payment-intent}
+    {:name :action/stripe-create-payout}],
+   :from :state/driver-arrived,
+   :to :state/cancelled-by-rider-with-fee}
+
+  {:name :transition/ride-cancel-by-driver-from-assigned,
+   :actor :actor.role/provider,
+   ;; Privileged so the "release this driver back onto the market" side
+   ;; effect always runs server-side - see the ride-driver-accept comment
+   ;; above.
+   :privileged? true,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/driver-assigned,
+   :to :state/cancelled-by-driver}
+
+  {:name :transition/ride-cancel-by-driver-from-en-route,
+   :actor :actor.role/provider,
+   :privileged? true,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/driver-en-route-to-pickup,
+   :to :state/cancelled-by-driver}
+
+  {:name :transition/ride-driver-arrived,
+   :actor :actor.role/provider,
+   :actions [],
+   :from :state/driver-en-route-to-pickup,
+   :to :state/driver-arrived}
+
+  {:name :transition/ride-start-trip,
+   :actor :actor.role/provider,
+   :actions [{:name :action/privileged-update-metadata}],
+   :from :state/driver-arrived,
+   :to :state/trip-in-progress}
+
+  {:name :transition/ride-complete-trip,
+   :actor :actor.role/provider,
+   :privileged? true,
+   :actions
+   [{:name :action/privileged-update-metadata}
+    {:name :action/privileged-set-line-items}
+    {:name :action/stripe-capture-payment-intent}],
+   :from :state/trip-in-progress,
+   :to :state/trip-completed}
+
+  {:name :transition/ride-payout,
+   :actor :actor.role/operator,
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/trip-completed,
+   :to :state/completed}
+
+  {:name :transition/ride-auto-payout,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/trip-completed]}
+     {:fn/period ["PT1H"]}]},
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/trip-completed,
+   :to :state/completed}
+
+  {:name :transition/ride-review-1-by-provider,
+   :actor :actor.role/provider,
+   :actions [{:name :action/post-review-by-provider}],
+   :from :state/completed,
+   :to :state/reviewed-by-provider}
+
+  {:name :transition/ride-review-2-by-provider,
+   :actor :actor.role/provider,
+   :actions
+   [{:name :action/post-review-by-provider}
+    {:name :action/publish-reviews}],
+   :from :state/reviewed-by-customer,
+   :to :state/reviewed}
+
+  {:name :transition/ride-review-1-by-customer,
+   :actor :actor.role/customer,
+   :actions [{:name :action/post-review-by-customer}],
+   :from :state/completed,
+   :to :state/reviewed-by-customer}
+
+  {:name :transition/ride-review-2-by-customer,
+   :actor :actor.role/customer,
+   :actions
+   [{:name :action/post-review-by-customer}
+    {:name :action/publish-reviews}],
+   :from :state/reviewed-by-provider,
+   :to :state/reviewed}
+
+  {:name :transition/ride-expire-review-period,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/completed]}
+     {:fn/period ["P7D"]}]},
+   :actions [],
+   :from :state/completed,
+   :to :state/reviewed}
+
+  {:name :transition/ride-expire-provider-review-period,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/reviewed-by-customer]}
+     {:fn/period ["P7D"]}]},
+   :actions [{:name :action/publish-reviews}],
+   :from :state/reviewed-by-customer,
+   :to :state/reviewed}
+
+  {:name :transition/ride-expire-customer-review-period,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/reviewed-by-provider]}
+     {:fn/period ["P7D"]}]},
+   :actions [{:name :action/publish-reviews}],
+   :from :state/reviewed-by-provider,
+   :to :state/reviewed}],
+
+ :notifications
+ [{:name :notification/ride-driver-request-sent,
+   :on :transition/ride-confirm-payment,
+   :to :actor.role/provider,
+   :template :ride-new-request-to-driver}
+  {:name :notification/ride-driver-accepted,
+   :on :transition/ride-driver-accept,
+   :to :actor.role/customer,
+   :template :ride-driver-accepted}
+  {:name :notification/ride-driver-arrived,
+   :on :transition/ride-driver-arrived,
+   :to :actor.role/customer,
+   :template :ride-driver-arrived}
+  {:name :notification/ride-trip-receipt,
+   :on :transition/ride-complete-trip,
+   :to :actor.role/customer,
+   :template :ride-trip-receipt}
+  {:name :notification/ride-trip-payout,
+   :on :transition/ride-payout,
+   :to :actor.role/provider,
+   :template :ride-trip-payout}
+  {:name :notification/ride-cancelled-by-rider-to-driver,
+   :on :transition/ride-cancel-by-rider-with-fee-from-assigned,
+   :to :actor.role/provider,
+   :template :ride-cancelled-to-driver}
+  {:name :notification/ride-cancelled-by-driver-to-rider,
+   :on :transition/ride-cancel-by-driver-from-assigned,
+   :to :actor.role/customer,
+   :template :ride-cancelled-to-rider}
+  {:name :notification/ride-review-by-provider-first,
+   :on :transition/ride-review-1-by-provider,
+   :to :actor.role/customer,
+   :template :ride-review-by-other-party-unpublished}
+  {:name :notification/ride-review-by-customer-first,
+   :on :transition/ride-review-1-by-customer,
+   :to :actor.role/provider,
+   :template :ride-review-by-other-party-unpublished}]}
