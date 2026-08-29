@@ -1236,6 +1236,8 @@
   "TopbarMobileMenu.loginLink": "Log in",
   "TopbarMobileMenu.logoutLink": "Log out",
   "TopbarMobileMenu.newListingLink": "Post a new listing",
+  "TopbarMobileMenu.rideModeLink": "Switch to riding mode",
+  "TopbarMobileMenu.driveModeLink": "Switch to driving mode",
   "TopbarMobileMenu.profileSettingsLink": "Profile settings",
   "TopbarMobileMenu.signupLink": "Sign up",
   "TopbarMobileMenu.signupOrLogin": "{signup} or {login}",

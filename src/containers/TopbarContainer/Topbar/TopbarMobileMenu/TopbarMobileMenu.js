@@ -191,6 +191,22 @@ const TopbarMobileMenu = props => {
               <FormattedMessage id="TopbarMobileMenu.accountSettingsLink" />
             </NamedLink>
           </li>
+          <li className={classNames(css.navigationLink, currentPageClass('RidePage'))}>
+            <NamedLink name="RidePage">
+              <FormattedMessage
+                id="TopbarMobileMenu.rideModeLink"
+                defaultMessage="Switch to riding mode"
+              />
+            </NamedLink>
+          </li>
+          <li className={classNames(css.navigationLink, currentPageClass('DriverRidePage'))}>
+            <NamedLink name="DriverRidePage">
+              <FormattedMessage
+                id="TopbarMobileMenu.driveModeLink"
+                defaultMessage="Switch to driving mode"
+              />
+            </NamedLink>
+          </li>
         </ul>
         <ul className={css.customLinksWrapper}>{extraLinks}</ul>
         <div className={css.spacer} />
