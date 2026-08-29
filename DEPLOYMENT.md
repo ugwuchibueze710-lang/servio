@@ -25,13 +25,23 @@ This repo includes `render.yaml` at the project root, ready to use as a
 1. Push this repo to GitHub (or GitLab).
 2. In the Render dashboard: **New > Blueprint**, point it at the repo.
 3. Render reads `render.yaml` and creates a single web service (`servio`) with the build command
-   `yarn install --frozen-lockfile && yarn build` and start command `yarn start`.
+   `yarn install && yarn build` and start command `yarn start`.
 4. Fill in the env vars Render prompts for (everything marked `sync: false` in `render.yaml` - these
    are secrets and are intentionally not committed to git).
 5. After the first deploy, note the assigned `*.onrender.com` URL (or attach your own domain under
    **Settings > Custom Domains**), set `REACT_APP_MARKETPLACE_ROOT_URL` to that exact URL, and
    redeploy.
 6. Render terminates HTTPS for you automatically on both the default domain and custom domains.
+
+Note on `yarn install` (not `--frozen-lockfile`): this repo's `yarn.lock` was missing an entry
+for `puppeteer` (added for the invoice PDF feature, section 12 of `.env.example`) at the time this
+was set up. `--frozen-lockfile` fails outright on any drift between `package.json` and `yarn.lock`,
+so the build command omits it and lets yarn resolve/update the lockfile during the build instead.
+This was verified as the actual, only cause of the first deploy's build failure (see Render's build
+logs: `error Your lockfile needs to be updated, but yarn was run with --frozen-lockfile`). If you'd
+rather keep frozen-lockfile for reproducible builds, run `yarn install` locally once (regenerating
+`yarn.lock` with the puppeteer entry), commit the updated lockfile, then restore
+`buildCommand: yarn install --frozen-lockfile && yarn build` in `render.yaml`.
 
 `render.yaml` is currently set to Render's **free** plan (no card required) so you can stand this
 up and wire in credentials without committing to a paid plan yet. Free web services spin down
@@ -46,7 +56,7 @@ static site).
 The build/start commands are the same everywhere:
 
 ```sh
-yarn install --frozen-lockfile
+yarn install
 yarn build      # runs build-web (webpack client+server bundles) and build-server
 yarn start      # node server/index.js
 ```
@@ -61,7 +71,7 @@ cookies and redirects behave correctly behind that proxy.
 
 The optional "Download invoice (PDF)" feature (`server/api/invoice-pdf.js`) uses Puppeteer, which
 downloads its own self-contained Chromium build during `yarn install` - no extra buildCommand
-changes needed, and `render.yaml`'s `yarn install --frozen-lockfile && yarn build` already covers
+changes needed, and `render.yaml`'s `yarn install && yarn build` already covers
 it. This is known to work on Render's standard Node web service.
 
 If a deploy target's base image is missing Chromium's shared libraries (uncommon, but possible on a
