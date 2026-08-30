@@ -5,6 +5,7 @@
  * header for why this is a new, parallel route rather than replacing the live category search.
  */
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { userLocation } from '../../util/maps';
@@ -83,6 +84,9 @@ const ProviderSearchPageV2 = props => {
             {typeof business.distanceMeters === 'number' && (
               <p className={css.resultDetail}>{(business.distanceMeters / 1609.344).toFixed(1)} mi away</p>
             )}
+            <Link className={css.requestLink} to={`/book-v2/${business._id}`}>
+              Request this provider
+            </Link>
           </li>
         ))}
       </ul>

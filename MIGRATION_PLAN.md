@@ -76,9 +76,9 @@ entirely.
   category/business validation, cross-account authorization (a non-owner can't see or act on
   someone else's booking), the full accept -> scheduled -> in_progress -> completed happy path,
   rejecting an already-handled or terminal-state transition, and a customer cancelling their own
-  still-open request - see "How Phase 2 was tested" below for the method/caveat. **Not yet wired
-  to the frontend** - same reasoning as Phase 3: the request/inbox UI is part of Phase 9, once
-  enough of the backend exists to make a full UI pass worthwhile in one go rather than three.
+  still-open request - see "How Phase 2 was tested" below for the method/caveat. **A parallel,
+  unlinked frontend for this now exists too** - `/book-v2/:businessId`, `/my-bookings-v2`, and
+  `/provider-inbox-v2` - see the "Phase 9 - Booking request/inbox frontend built" entry below.
 - **Phase 5 - DONE for matching, POLLING not push (this change).** Driver onboarding
   (`POST /api/v2/drivers/me` writes a real `Driver` + `Vehicle` together - you can't go online
   without both) and the online/offline toggle (`POST /api/v2/drivers/me/status` - refuses to go
@@ -321,6 +321,54 @@ entirely.
     JSON shapes `providers/me`, `search/providers`, and `categories` actually return (read
     directly from their handler source, not assumed). A real end-to-end run against a live
     database is still needed before linking these anywhere.
+- **Phase 9 - Booking request/inbox frontend built, NOT linked anywhere (this change).** The
+  Phase 4 UI that had been explicitly deferred since Phase 4 shipped - built the same way as the
+  Provider profile/search pass right before it: parallel, unlinked routes, nothing existing
+  touched.
+  - **A real backend gap this pass found and closed rather than working around it**: there was
+    no way to look up a single Business by id, only search results or your own profile
+    (`GET /api/v2/providers/me`). A "request this provider" page reached directly by URL (a
+    refresh, a bookmark, a shared link) would have had nothing to render. Added
+    `GET /api/v2/providers/:id` (public, same reasoning as `GET /api/v2/search/providers` -
+    see that file's header) - returns a real 404 for an unknown or deactivated business rather
+    than silently serving stale data. 4 automated checks covered invalid-id-format, active,
+    inactive, and not-found cases.
+  - `/book-v2/:businessId` (`BookingRequestPageV2.duck.js`/`.js`) - a real request form: pick
+    from the provider's own offered categories (never a hand-typed list), a 10+ character
+    description matching the backend's own validation, an optional typed location label plus a
+    real "use my current location" button, preferred date/time, an optional budget note, and
+    additional notes. Loads the provider via the new endpoint above so the page works on a
+    direct visit, not only when arriving from search with data already in memory. A
+    `ProviderSearchPageV2` result card now links here via a new "Request this provider" link -
+    the first real link between any two pieces of this v2 set.
+  - `/my-bookings-v2` (`MyBookingsPageV2.duck.js`/`.js`) - a customer's real booking list from
+    `GET /api/v2/bookings/mine`: status per booking, the provider's quoted price once accepted,
+    a "Pay" button once accepted (identical Stripe integration to `RidePageV2.js` - the same
+    `confirmCardPayment` thunk from `ducks/stripe.duck.js`, `StripePaymentForm`, and the same
+    webhook-driven `paymentStatus` flip), and cancellation from any still-open state via
+    `POST /api/v2/bookings/:id/status`.
+  - `/provider-inbox-v2` (`ProviderInboxPageV2.duck.js`/`.js`) - a provider's real inbox from
+    `GET /api/v2/bookings/inbox`: accept (with an actual quoted-price input - nothing is
+    accepted without the provider typing a real number) or decline a pending request, then
+    advance accepted work through scheduled -> in progress -> completed one real step at a
+    time, enforced server-side by `bookingStateMachine.js` exactly as tested in Phase 4. A
+    provider with no `Business` yet sees the backend's real, honest message and a link to
+    `/provider-profile-v2` rather than an empty list with no explanation.
+  - `src/booking/bookingProcessV2.js` - the same "mirror the real backend's own status
+    vocabulary" approach as `src/ride/rideProcessV2.js`, matching `Booking.STATUS_VALUES` and
+    `bookingStateMachine.js` directly rather than reusing a Sharetribe transaction process.
+  - **Known, disclosed gaps, left open rather than faked**: no review UI yet on top of a
+    completed booking (`POST /api/v2/reviews/bookings/:id` is built and tested but has no
+    frontend consumer - a further Phase 9 item); no photo-upload UI on the request form (no
+    upload endpoint exists yet either); after paying, this page re-fetches the whole booking
+    list rather than polling the one booking, so `paymentStatus` may briefly still read
+    "processing" until the next fetch after the Stripe webhook actually lands - the same kind
+    of webhook-timing gap already disclosed for Ride's payment flow; nothing here is linked
+    from the live site's actual navigation - reaching any of these three routes still means
+    typing the URL, except for the one new internal link from search results into the request
+    form. Verified the same way as every other frontend pass in this sandbox (no live
+    MongoDB/Stripe/network access here): `@babel/parser` syntax-checked every new file, and
+    every action/reducer was traced by hand against the exact JSON the real handlers return.
 - **Phase 9 - Frontend rewire**, ongoing throughout: remove `sharetribe-flex-sdk` calls from each
   `*.duck.js` file as its backing phase lands; this is the biggest single piece of work by file
   count.

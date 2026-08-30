@@ -31,6 +31,7 @@ const authBridgeV2 = require('./api/v2/auth/bridge');
 const { requireAuth } = require('./middleware/authenticate');
 const providersUpsertMeV2 = require('./api/v2/providers/upsertMe');
 const providersGetMeV2 = require('./api/v2/providers/getMe');
+const providersGetOneV2 = require('./api/v2/providers/getOne');
 const searchProvidersV2 = require('./api/v2/search/providers');
 const bookingsCreateV2 = require('./api/v2/bookings/create');
 const bookingsListMineV2 = require('./api/v2/bookings/listMine');
@@ -141,6 +142,7 @@ router.post('/v2/auth/bridge', authBridgeV2);
 // geospatial search. Search is public; creating/editing your own profile requires auth.
 router.post('/v2/providers/me', requireAuth, providersUpsertMeV2);
 router.get('/v2/providers/me', requireAuth, providersGetMeV2);
+router.get('/v2/providers/:id', providersGetOneV2);
 router.get('/v2/search/providers', searchProvidersV2);
 
 // Phase 4 of the Sharetribe migration (see MIGRATION_PLAN.md): the real booking lifecycle -

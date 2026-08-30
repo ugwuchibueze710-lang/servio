@@ -47,6 +47,15 @@ const ProviderSearchPageV2 = loadable(() =>
 const ProviderProfilePageV2 = loadable(() =>
   import(/* webpackChunkName: "ProviderProfilePageV2" */ '../containers/ProviderProfilePageV2/ProviderProfilePageV2')
 );
+const BookingRequestPageV2 = loadable(() =>
+  import(/* webpackChunkName: "BookingRequestPageV2" */ '../containers/BookingRequestPageV2/BookingRequestPageV2')
+);
+const MyBookingsPageV2 = loadable(() =>
+  import(/* webpackChunkName: "MyBookingsPageV2" */ '../containers/MyBookingsPageV2/MyBookingsPageV2')
+);
+const ProviderInboxPageV2 = loadable(() =>
+  import(/* webpackChunkName: "ProviderInboxPageV2" */ '../containers/ProviderInboxPageV2/ProviderInboxPageV2')
+);
 const SearchPageWithMap = loadable(() => import(/* webpackChunkName: "SearchPageWithMap" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithMap'));
 const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPageWithGrid" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithGrid'));
 const ServiceCategoryPage = loadable(() => import(/* webpackChunkName: "ServiceCategoryPage" */ '../containers/ServiceCategoryPage/ServiceCategoryPage'));
@@ -313,6 +322,31 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/providers-v2/:categorySlug',
       name: 'ProviderSearchPageV2',
       component: ProviderSearchPageV2,
+    },
+
+    // New-backend booking request/inbox - Phase 4's still-missing frontend (backend has been
+    // built/tested since an earlier phase - see MIGRATION_PLAN.md). Same "parallel, unlinked
+    // route" pattern as the rest of this v2 set.
+    {
+      path: '/book-v2/:businessId',
+      name: 'BookingRequestPageV2',
+      auth: true,
+      authPage: 'LoginPage',
+      component: BookingRequestPageV2,
+    },
+    {
+      path: '/my-bookings-v2',
+      name: 'MyBookingsPageV2',
+      auth: true,
+      authPage: 'LoginPage',
+      component: MyBookingsPageV2,
+    },
+    {
+      path: '/provider-inbox-v2',
+      name: 'ProviderInboxPageV2',
+      auth: true,
+      authPage: 'LoginPage',
+      component: ProviderInboxPageV2,
     },
 
     // Note: authenticating with IdP (e.g. Facebook) expects that /login path exists

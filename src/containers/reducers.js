@@ -24,6 +24,9 @@ import RidePageV2 from './RidePage/RidePageV2.duck';
 import DriverRidePageV2 from './DriverRidePage/DriverRidePageV2.duck';
 import ProviderProfilePageV2 from './ProviderProfilePageV2/ProviderProfilePageV2.duck';
 import ProviderSearchPageV2 from './ProviderSearchPageV2/ProviderSearchPageV2.duck';
+import BookingRequestPageV2 from './BookingRequestPageV2/BookingRequestPageV2.duck';
+import MyBookingsPageV2 from './MyBookingsPageV2/MyBookingsPageV2.duck';
+import ProviderInboxPageV2 from './ProviderInboxPageV2/ProviderInboxPageV2.duck';
 import SearchPage from './SearchPage/SearchPage.duck';
 import StripePayoutPage from './StripePayoutPage/StripePayoutPage.duck';
 import TransactionPage from './TransactionPage/TransactionPage.duck';
@@ -50,6 +53,9 @@ export {
   DriverRidePageV2,
   ProviderProfilePageV2,
   ProviderSearchPageV2,
+  BookingRequestPageV2,
+  MyBookingsPageV2,
+  ProviderInboxPageV2,
   SearchPage,
   StripePayoutPage,
   TransactionPage,

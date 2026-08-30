@@ -1,0 +1,80 @@
+.root {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.title {
+  margin-bottom: 8px;
+}
+
+.bio {
+  color: #4a4a4a;
+  margin-bottom: 20px;
+}
+
+.errorText {
+  color: #b91c1c;
+  margin-bottom: 12px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.input,
+.textarea {
+  font-weight: 400;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 15px;
+}
+
+.textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.locationRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.locationLabel {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.primaryButton {
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: none;
+  background: #111827;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.secondaryButton {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid #4a4a4a;
+  background: #fff;
+  cursor: pointer;
+}
