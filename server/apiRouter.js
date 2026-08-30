@@ -51,6 +51,17 @@ const reviewsCreateBookingV2 = require('./api/v2/reviews/createBookingReview');
 const reviewsCreateRideV2 = require('./api/v2/reviews/createRideReview');
 const reviewsListForBusinessV2 = require('./api/v2/reviews/listForBusiness');
 const reviewsListForDriverV2 = require('./api/v2/reviews/listForDriver');
+const requireAdmin = require('./middleware/requireAdmin');
+const adminCategoriesListV2 = require('./api/v2/admin/categories/list');
+const adminCategoriesCreateV2 = require('./api/v2/admin/categories/create');
+const adminCategoriesUpdateV2 = require('./api/v2/admin/categories/update');
+const adminCategoriesDeactivateV2 = require('./api/v2/admin/categories/deactivate');
+const adminUsersListV2 = require('./api/v2/admin/users/list');
+const adminUsersSetActiveV2 = require('./api/v2/admin/users/setActive');
+const adminBusinessesListV2 = require('./api/v2/admin/businesses/list');
+const adminBusinessesModerateV2 = require('./api/v2/admin/businesses/moderate');
+const adminDriversListV2 = require('./api/v2/admin/drivers/list');
+const adminDriversModerateV2 = require('./api/v2/admin/drivers/moderate');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -157,6 +168,21 @@ router.post('/v2/reviews/bookings/:id', requireAuth, reviewsCreateBookingV2);
 router.post('/v2/reviews/rides/:id', requireAuth, reviewsCreateRideV2);
 router.get('/v2/reviews/business/:businessId', reviewsListForBusinessV2);
 router.get('/v2/reviews/driver/:driverId', reviewsListForDriverV2);
+
+// Phase 8 of the Sharetribe migration (see MIGRATION_PLAN.md): admin CRUD. Every route below
+// requires requireAuth AND requireAdmin - requireAdmin checks the real isAdmin flag on the
+// loaded account, which no API endpoint can ever set (see server/middleware/requireAdmin.js
+// and server/scripts/makeAdmin.js).
+router.get('/v2/admin/categories', requireAuth, requireAdmin, adminCategoriesListV2);
+router.post('/v2/admin/categories', requireAuth, requireAdmin, adminCategoriesCreateV2);
+router.patch('/v2/admin/categories/:id', requireAuth, requireAdmin, adminCategoriesUpdateV2);
+router.delete('/v2/admin/categories/:id', requireAuth, requireAdmin, adminCategoriesDeactivateV2);
+router.get('/v2/admin/users', requireAuth, requireAdmin, adminUsersListV2);
+router.patch('/v2/admin/users/:id/active', requireAuth, requireAdmin, adminUsersSetActiveV2);
+router.get('/v2/admin/businesses', requireAuth, requireAdmin, adminBusinessesListV2);
+router.patch('/v2/admin/businesses/:id', requireAuth, requireAdmin, adminBusinessesModerateV2);
+router.get('/v2/admin/drivers', requireAuth, requireAdmin, adminDriversListV2);
+router.patch('/v2/admin/drivers/:id', requireAuth, requireAdmin, adminDriversModerateV2);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

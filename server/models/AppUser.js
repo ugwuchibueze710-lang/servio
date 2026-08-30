@@ -24,6 +24,10 @@ const appUserSchema = new mongoose.Schema(
     },
     notificationsEnabled: { type: Boolean, default: true },
     active: { type: Boolean, default: true },
+    // Admin access (Phase 8, see MIGRATION_PLAN.md). Deliberately no API endpoint can ever set
+    // this to true - see server/middleware/requireAdmin.js and server/scripts/makeAdmin.js -
+    // only direct database access can grant it, so there's no self-escalation path.
+    isAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

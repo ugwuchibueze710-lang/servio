@@ -129,8 +129,19 @@ entirely.
   public lists. 11 automated checks covered all of this, including that a second review produces
   a genuinely recomputed average rather than a hardcoded number - see "How Phase 2 was tested"
   below.
-- **Phase 8 - Admin CRUD** for categories/users/providers/drivers/bookings/rides (section 23),
-  replacing manual `seedCategories.js` runs.
+- **Phase 8 - DONE for categories/users/providers/drivers (this change).** Real admin CRUD,
+  gated by a new `AppUser.isAdmin` flag that **no API endpoint can ever set** - the only way to
+  create the first admin (or add another) is `node server/scripts/makeAdmin.js you@example.com`
+  with direct database access, the same pattern as `seedCategories.js`, so there is no
+  self-escalation path through the API. `/api/v2/admin/categories` (list/create/update/soft-delete
+  - this is what replaces manually re-running `seedCategories.js` going forward), `/api/v2/admin/
+  users` (search + suspend, with a real guard stopping an admin from locking themselves out),
+  `/api/v2/admin/businesses` and `/api/v2/admin/drivers` (list + moderate - deactivating a driver
+  also force-takes them offline so a suspended driver can't keep receiving ride requests). 14
+  automated checks covered all of it, including the non-admin-refused check, the self-lockout
+  guard, and the deactivate-forces-offline behavior - see "How Phase 2 was tested" below. **Not
+  done: admin views for bookings/rides** (oversight/dispute-resolution listing) - lower priority
+  than the account/category/provider/driver management that exists now, left for a later pass.
 - **Phase 9 - Frontend rewire**, ongoing throughout: remove `sharetribe-flex-sdk` calls from each
   `*.duck.js` file as its backing phase lands; this is the biggest single piece of work by file
   count.
