@@ -44,6 +44,9 @@ const ridesGetOneV2 = require('./api/v2/rides/getOne');
 const ridesListCandidatesV2 = require('./api/v2/rides/listCandidates');
 const ridesDriverRespondV2 = require('./api/v2/rides/driverRespond');
 const ridesCancelV2 = require('./api/v2/rides/cancel');
+const paymentsCreateBookingIntentV2 = require('./api/v2/payments/createBookingIntent');
+const paymentsCreateRideIntentV2 = require('./api/v2/payments/createRideIntent');
+const paymentsWebhookV2 = require('./api/v2/payments/webhook');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -54,6 +57,11 @@ const router = express.Router();
 
 // New /v2 endpoints (server/api/v2/*) take plain JSON bodies, unlike the legacy Transit-based
 // endpoints above - scope express.json() to just that path prefix so nothing else changes.
+// Stripe's webhook signature check needs the raw request body, not JSON-parsed - this route
+// is registered (with its own express.raw() parser) BEFORE the general /v2 JSON body parser
+// below, so it never gets its body pre-parsed. See MIGRATION_PLAN.md Phase 6.
+router.post('/v2/payments/webhook', express.raw({ type: 'application/json' }), paymentsWebhookV2);
+
 router.use('/v2', express.json());
 
 // ================ API router middleware: ================ //
@@ -131,6 +139,12 @@ router.get('/v2/rides/candidates/mine', requireAuth, ridesListCandidatesV2);
 router.get('/v2/rides/:id', requireAuth, ridesGetOneV2);
 router.post('/v2/rides/:id/driver-respond', requireAuth, ridesDriverRespondV2);
 router.post('/v2/rides/:id/cancel', requireAuth, ridesCancelV2);
+
+// Phase 6 of the Sharetribe migration (see MIGRATION_PLAN.md): real Stripe payments for both
+// bookings and rides, sharing one integration. The webhook (registered above, pre-JSON-parser)
+// is the actual source of truth for paymentStatus - these two only create the PaymentIntent.
+router.post('/v2/payments/bookings/:id/intent', requireAuth, paymentsCreateBookingIntentV2);
+router.post('/v2/payments/rides/:id/intent', requireAuth, paymentsCreateRideIntentV2);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

@@ -101,9 +101,23 @@ entirely.
   `RidePage.js`/`DriverRidePage.js` over to call this API instead of Sharetribe's `ride`
   transaction process both belong in Phase 9, once the frontend rewire is happening as one
   deliberate pass rather than three separate half-migrated ride screens.
-- **Phase 6 - Payments.** Stripe Payment Intents + Stripe Connect (for provider/driver payouts),
-  replacing Sharetribe's Stripe integration, shared by both service bookings and rides (section
-  15-17). `stripe` is already added to `package.json` for this phase.
+- **Phase 6 - DONE for Payment Intents, Connect payouts NOT done (this change).** Real Stripe
+  payments, shared by both bookings and rides: `POST /api/v2/payments/bookings/:id/intent` (only
+  once a booking is actually accepted with a real quoted price - rejects an unaccepted booking,
+  an already-paid one, or someone paying for a booking that isn't theirs; reuses an existing
+  still-open PaymentIntent instead of creating a duplicate charge attempt on every retry) and the
+  ride equivalent, `POST /api/v2/payments/rides/:id/intent` (only once a ride has actually
+  completed, charging the real final fare). Critically, **the webhook
+  (`POST /api/v2/payments/webhook`) - not the client confirming a card - is what actually flips
+  `paymentStatus` to `'paid'`**, verified against `STRIPE_WEBHOOK_SECRET` using Stripe's real
+  signature check; a forged or malformed webhook is rejected with a 400, never trusted. 14
+  automated checks covered all of this, including a genuine bad-signature rejection and
+  confirming the database itself (not just the response) reflects `paid`/`failed` after a webhook
+  - see "How Phase 2 was tested" below. **Not done: Stripe Connect for provider/driver payouts**
+  (section 15-17 also calls for actually paying providers and drivers out, not just collecting
+  from customers) - that's a separate, larger integration (Connect account onboarding, payout
+  scheduling) deferred to when there's a real provider/driver base to pay out to. Also not yet
+  wired to any frontend checkout screen - same Phase 9 reasoning as the rest.
 - **Phase 7 - Reviews**, tied to completed `Booking`/`RideRequest` documents only (section 20).
 - **Phase 8 - Admin CRUD** for categories/users/providers/drivers/bookings/rides (section 23),
   replacing manual `seedCategories.js` runs.
