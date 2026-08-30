@@ -25,11 +25,11 @@ const RideRequest = require('../../../models/RideRequest');
 const Driver = require('../../../models/Driver');
 const { isConnected, connect } = require('../../../db/mongoose');
 const { calculateRideFare, MILES_PER_METER, MINUTES_PER_SECOND } = require('../../../utils/rideFare');
+const { ACTIVE_RIDE_STATUSES } = require('../../../utils/rideStateMachine');
 
 const MILES_TO_METERS = 1609.34;
 const MATCH_RADIUS_MILES = 10;
 const MAX_CANDIDATES = 5;
-const ACTIVE_RIDE_STATUSES = ['driver_assigned', 'driver_arriving', 'driver_arrived', 'trip_started'];
 
 const parsePoint = (point, label) => {
   if (!point || typeof point !== 'object') return null;

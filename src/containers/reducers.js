@@ -20,6 +20,8 @@ import ProfileSettingsPage from './ProfileSettingsPage/ProfileSettingsPage.duck'
 import RequestQuotePage from './RequestQuotePage/RequestQuotePage.duck';
 import RidePage from './RidePage/RidePage.duck';
 import DriverRidePage from './DriverRidePage/DriverRidePage.duck';
+import RidePageV2 from './RidePage/RidePageV2.duck';
+import DriverRidePageV2 from './DriverRidePage/DriverRidePageV2.duck';
 import SearchPage from './SearchPage/SearchPage.duck';
 import StripePayoutPage from './StripePayoutPage/StripePayoutPage.duck';
 import TransactionPage from './TransactionPage/TransactionPage.duck';
@@ -42,6 +44,8 @@ export {
   RequestQuotePage,
   RidePage,
   DriverRidePage,
+  RidePageV2,
+  DriverRidePageV2,
   SearchPage,
   StripePayoutPage,
   TransactionPage,

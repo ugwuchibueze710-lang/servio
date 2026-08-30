@@ -35,6 +35,12 @@ const ProfileSettingsPage = loadable(() => import(/* webpackChunkName: "ProfileS
 const RequestQuotePage = loadable(() => import(/* webpackChunkName: "RequestQuotePage" */ '../containers/RequestQuotePage/RequestQuotePage'));
 const RidePage = loadable(() => import(/* webpackChunkName: "RidePage" */ '../containers/RidePage/RidePage'));
 const DriverRidePage = loadable(() => import(/* webpackChunkName: "DriverRidePage" */ '../containers/DriverRidePage/DriverRidePage'));
+// New-backend versions of the two above - see MIGRATION_PLAN.md. Separate routes, separate
+// components, separate redux slices; RidePage/DriverRidePage above are completely untouched.
+const RidePageV2 = loadable(() => import(/* webpackChunkName: "RidePageV2" */ '../containers/RidePage/RidePageV2'));
+const DriverRidePageV2 = loadable(() =>
+  import(/* webpackChunkName: "DriverRidePageV2" */ '../containers/DriverRidePage/DriverRidePageV2')
+);
 const SearchPageWithMap = loadable(() => import(/* webpackChunkName: "SearchPageWithMap" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithMap'));
 const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPageWithGrid" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithGrid'));
 const ServiceCategoryPage = loadable(() => import(/* webpackChunkName: "ServiceCategoryPage" */ '../containers/ServiceCategoryPage/ServiceCategoryPage'));
@@ -266,6 +272,24 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       auth: true,
       authPage: 'LoginPage',
       component: DriverRidePage,
+    },
+
+    // New-backend Ride, side by side with the live routes above while it's being verified
+    // end-to-end (real MongoDB/Stripe configured) - see MIGRATION_PLAN.md. Not linked from
+    // anywhere in the UI yet; reached only by navigating to these paths directly.
+    {
+      path: '/ride-v2',
+      name: 'RidePageV2',
+      auth: true,
+      authPage: 'LoginPage',
+      component: RidePageV2,
+    },
+    {
+      path: '/drive-v2',
+      name: 'DriverRidePageV2',
+      auth: true,
+      authPage: 'LoginPage',
+      component: DriverRidePageV2,
     },
 
     // Note: authenticating with IdP (e.g. Facebook) expects that /login path exists

@@ -234,6 +234,56 @@ entirely.
   collects. **Still not done: actually rewiring `RidePage.js`/`DriverRidePage.js`** to call any
   of this - that's the next, genuinely risky step, now that the backend it would call is at real
   functional parity (net of the three disclosed differences above) with what's live.
+- **Phase 9 - Ride frontend rewire built, NOT yet live (this change).** The actually risky step:
+  a full, parallel new-backend frontend for Ride, reachable at `/ride-v2` and `/drive-v2` -
+  `RidePage.js`/`DriverRidePage.js` at the real, live `/ride` and `/drive` routes are completely
+  untouched, byte-for-byte, and keep working on Sharetribe exactly as they do today. Nothing in
+  the live app links to the new routes yet - reaching them means typing the URL directly.
+  - `src/util/apiV2.js` - the missing piece for calling any `/api/v2` endpoint from the browser
+    at all (nothing before this phase ever had). Calls `POST /api/v2/auth/bridge` automatically
+    and caches the resulting JWT, re-bridging once if the server ever rejects it as expired.
+  - `src/ride/rideProcessV2.js` - a deliberately SEPARATE, smaller state vocabulary from
+    `rideProcess.js`, matching `RideRequest.STATUS_VALUES` directly instead of forcing the new
+    backend's genuinely different model (broadcast dispatch, post-trip payment, no fee-tiered
+    cancellation) through the Sharetribe process's 20-transition graph - see its file header.
+  - `RidePageV2.duck.js` / `RidePageV2.js` - the rider side. Reuses everything in RidePage.js
+    that was never Sharetribe-specific to begin with (Mapbox geocoding/directions, RideMap, the
+    fare-estimate math, the actual `StripePaymentForm` integration) and replaces the rest:
+    request → real server-computed fare and matching, poll `GET /api/v2/rides/:id` for status +
+    live driver location, then - once `trip_completed` - `POST .../payments/rides/:id/intent`
+    and the same Stripe confirm flow every other Phase 6 payment already uses.
+  - `DriverRidePageV2.duck.js` / `DriverRidePageV2.js` - the driver side. Reuses
+    `DriverRidePage.js`'s real GPS odometer hook verbatim (pure geolocation math, always was
+    backend-agnostic) and replaces the Sharetribe listing/transaction calls with `/api/v2/
+    drivers/*` and `/api/v2/rides/*`.
+  - **A real gap this rewrite surfaced and closed rather than leaving silently broken**: nothing
+    let a driver's app recover which ride they were on after a reload - `GET /api/v2/rides/
+    active/mine` (new) fixes that; `ACTIVE_RIDE_STATUSES` was pulled out of `create.js` into
+    `server/utils/rideStateMachine.js` so the two endpoints can't drift apart on what "busy"
+    means. 2 additional automated checks covered this without touching the 14 from the
+    lifecycle-parity pass.
+  - **A real financial bug this rewrite caught before it ever ran for real**:
+    `createRideIntent.js` was multiplying an already-in-cents `finalFare`/`estimatedFare` by
+    100 again when building the Stripe charge amount - a ride that should cost $11.95 would have
+    been charged as $1195.00. Nothing had ever exercised this endpoint against a real Phase-5
+    fare value until this pass wired it into an actual payment flow, so the bug had been latent
+    since Phase 6. Fixed to use the stored cents value directly - see the file's own updated
+    header comment.
+  - **Known, still-open gap, disclosed rather than papered over**: there's no driver-onboarding
+    FORM on `/drive-v2` (vehicle make/model/plate, license) - only the tested backend endpoint
+    for it. A driver with no `Driver` record sees a real message saying so.
+  - **Not tested against a real deployment** (no MongoDB/Stripe/live Mapbox network access in
+    the sandbox this was built in, and no way to drive an actual browser through geolocation
+    prompts, Sharetribe login, and Stripe's test-card flow from here) - covered instead by: a
+    real JSX/ES-module parser (`@babel/parser`, with the `jsx` plugin) run against every new
+    file to catch syntax errors, and a manual, field-by-field trace of every action/reducer
+    against the exact JSON shapes the real handlers above return (confirmed by reading each
+    handler's actual `res.status(...).json(...)` calls, not assumed). **Before switching the
+    live `/ride` and `/drive` routes over to these, or linking to `/ride-v2`/`/drive-v2` from
+    anywhere in the UI, this needs a real end-to-end run**: `MONGODB_URI` and
+    `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` configured for real, one rider account and one
+    driver account, and an actual walk through request → match → accept → arrive → start →
+    complete → pay.
 - **Phase 9 - Frontend rewire**, ongoing throughout: remove `sharetribe-flex-sdk` calls from each
   `*.duck.js` file as its backing phase lands; this is the biggest single piece of work by file
   count.

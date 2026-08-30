@@ -43,6 +43,7 @@ const driversSetStatusV2 = require('./api/v2/drivers/setStatus');
 const ridesCreateV2 = require('./api/v2/rides/create');
 const ridesGetOneV2 = require('./api/v2/rides/getOne');
 const ridesListCandidatesV2 = require('./api/v2/rides/listCandidates');
+const ridesGetActiveMineV2 = require('./api/v2/rides/getActiveMine');
 const ridesDriverRespondV2 = require('./api/v2/rides/driverRespond');
 const ridesCancelV2 = require('./api/v2/rides/cancel');
 const ridesUpdateStatusV2 = require('./api/v2/rides/updateStatus');
@@ -159,6 +160,9 @@ router.get('/v2/drivers/me', requireAuth, driversGetMeV2);
 router.post('/v2/drivers/me/status', requireAuth, driversSetStatusV2);
 router.post('/v2/rides', requireAuth, ridesCreateV2);
 router.get('/v2/rides/candidates/mine', requireAuth, ridesListCandidatesV2);
+// A driver's own currently-assigned ride, if any - lets their app recover state after a
+// reload instead of only ever learning about a ride at the moment it's offered.
+router.get('/v2/rides/active/mine', requireAuth, ridesGetActiveMineV2);
 router.get('/v2/rides/:id', requireAuth, ridesGetOneV2);
 router.post('/v2/rides/:id/driver-respond', requireAuth, ridesDriverRespondV2);
 router.post('/v2/rides/:id/cancel', requireAuth, ridesCancelV2);

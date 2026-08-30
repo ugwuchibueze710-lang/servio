@@ -4,6 +4,14 @@
  * POST /api/v2/payments/rides/:id/intent - the customer paying for a completed ride. Uses the
  * final fare if the trip is done, since that's the real charge amount; refuses to create an
  * intent before the ride has actually completed (no charging for a ride that hasn't happened).
+ *
+ * IMPORTANT - fixed a real unit bug while wiring this into the actual Ride payment flow:
+ * ride.estimatedFare/finalFare are already Stripe subunits (cents) - see server/utils/
+ * rideFare.js's totalInSubunits, which is exactly what gets stored on the ride - unlike
+ * Booking.quotedPrice (createBookingIntent.js), which is a plain dollar amount a provider
+ * typed in and genuinely needs *100. Multiplying an already-in-cents ride fare by 100 again
+ * would have charged the customer 100x the real fare the moment this endpoint was actually
+ * exercised end-to-end, which nothing had done until now.
  */
 const RideRequest = require('../../../models/RideRequest');
 const { getStripeClient } = require('../../../utils/stripeClient');
@@ -51,8 +59,9 @@ module.exports = async (req, res) => {
       });
       return;
     }
-    const fare = ride.finalFare || ride.estimatedFare;
-    if (!fare || fare <= 0) {
+    // Already in cents (Stripe subunits) - see the file header comment above. Do NOT *100 this.
+    const fareInCents = ride.finalFare || ride.estimatedFare;
+    if (!fareInCents || fareInCents <= 0) {
       res.status(409).json({ error: 'no_fare', message: 'This ride has no fare recorded yet.' });
       return;
     }
@@ -64,13 +73,13 @@ module.exports = async (req, res) => {
     let intent;
     if (ride.stripePaymentIntentId) {
       const existing = await stripe.paymentIntents.retrieve(ride.stripePaymentIntentId);
-      if (OPEN_INTENT_STATUSES.includes(existing.status) && existing.amount === Math.round(fare * 100)) {
+      if (OPEN_INTENT_STATUSES.includes(existing.status) && existing.amount === Math.round(fareInCents)) {
         intent = existing;
       }
     }
     if (!intent) {
       intent = await stripe.paymentIntents.create({
-        amount: Math.round(fare * 100),
+        amount: Math.round(fareInCents),
         currency: 'usd',
         metadata: { rideId: String(ride._id), type: 'ride' },
       });

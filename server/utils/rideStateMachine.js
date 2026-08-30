@@ -21,4 +21,10 @@ const ALLOWED_TRANSITIONS = {
 
 const canTransition = (fromStatus, toStatus) => (ALLOWED_TRANSITIONS[fromStatus] || []).includes(toStatus);
 
-module.exports = { ALLOWED_TRANSITIONS, canTransition };
+// A driver is "busy" (excluded from new candidate pools, and this is what a driver's own
+// active-ride lookup searches for) in exactly these statuses - shared between
+// server/api/v2/rides/create.js and server/api/v2/rides/getActiveMine.js so the two can never
+// silently drift apart.
+const ACTIVE_RIDE_STATUSES = ['driver_assigned', 'driver_arriving', 'driver_arrived', 'trip_started'];
+
+module.exports = { ALLOWED_TRANSITIONS, canTransition, ACTIVE_RIDE_STATUSES };
