@@ -495,3 +495,12 @@ anything, so it wasn't obvious the location was actually being used to filter li
 - General visual polish pass on the same component while in there: tighter heading tracking,
   card-style shadows on the location box/search box/category tiles, a subtle hover lift + zoom on
   category tiles, and a search icon inside the category filter box.
+
+**Bug found and fixed during live verification (same day):** after this was deployed, typing a
+location into the box showed real results from Mapbox (confirmed via DOM inspection - e.g.
+typing "New York" correctly returned 5 real place predictions) but the prediction text was
+invisible - white text on the light dropdown background this component's new styling uses.
+Root cause: `LocationAutocompleteInputImpl.js` defaults its prediction list-item text to white
+unless the caller passes `useDarkText={true}`, and the original `CategoryHero.js` change above
+didn't pass it. Fixed by adding `useDarkText={true}` to the `LocationAutocompleteInput` call - a
+one-line change, no other behavior affected.

@@ -264,6 +264,7 @@ const CategoryHero = () => {
             inputClassName={css.locationInputField}
             predictionsClassName={css.locationPredictions}
             CustomIcon={LocationPinIcon}
+            useDarkText={true}
             autoFocus={isEditingLocation}
             placeholder={intl.formatMessage({ id: 'PageBuilder.SearchCTA.locationPlaceholder' })}
             closeOnBlur={true}
