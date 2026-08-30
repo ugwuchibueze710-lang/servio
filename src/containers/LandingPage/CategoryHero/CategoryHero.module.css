@@ -130,16 +130,21 @@
 }
 
 /* ================ Heading ================ */
+/* Deliberately its own display font (Plus Jakarta Sans, loaded in public/index.html) instead of
+   the site-wide Inter body font - this is the one place on the homepage meant to read as a
+   distinct "headline" moment rather than UI chrome, matching the rest of Servio's type (buttons,
+   nav, form labels) unchanged everywhere else. */
 .title {
-  font-size: 28px;
-  line-height: 1.15;
+  font-family: 'Plus Jakarta Sans', var(--fontFamily);
+  font-size: 32px;
+  line-height: 1.08;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--colorGrey900);
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
 
   @media (--viewportMedium) {
-    font-size: 38px;
+    font-size: 46px;
   }
 }
 
@@ -147,13 +152,24 @@
   font-size: 15px;
   line-height: 1.5;
   color: var(--colorGrey600);
-  margin: 0 0 24px 0;
-  max-width: 640px;
+  margin: 0 0 28px 0;
+  max-width: 560px;
 
   & strong {
     color: var(--colorGrey900);
     font-weight: 700;
   }
+}
+
+/* Thin accent rule under the heading - a small, deliberate brand touch that ties the hero back
+   to the marketplace color without competing with the heading's own weight/size for attention. */
+.titleAccent {
+  display: block;
+  width: 56px;
+  height: 4px;
+  border-radius: 2px;
+  margin: 0 0 16px 0;
+  background: linear-gradient(90deg, var(--marketplaceColor), var(--marketplaceColorLight));
 }
 
 /* ================ Category search box ================ */

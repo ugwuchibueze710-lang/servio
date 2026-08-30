@@ -280,6 +280,7 @@ const CategoryHero = () => {
         )}
       </div>
 
+      <span className={css.titleAccent} aria-hidden="true" />
       <h1 className={css.title}>What service do you need?</h1>
       <p className={css.subtitle}>
         {isLocationLocked ? (

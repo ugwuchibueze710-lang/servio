@@ -95,6 +95,11 @@ const LoadingSpinner = () => {
  * @param {ReactNode?} props.fallbackPage
  * @param {string} props.schemaType type from schema.org (e.g. 'Article', 'Website')
  * @param {string?} props.currentPage name of the current page based on route configuration
+ * @param {ReactNode?} props.beforeMainContent optional content rendered inside <Main>, before the
+ *   CMS-driven sections (e.g. LandingPage's CategoryHero). Lets a page add its own above-the-fold
+ *   content while still going through PageBuilder for the shared Topbar/Footer and page meta, and
+ *   - crucially - keeps that content inside the actual page layout instead of in front of it, so
+ *   the site header still renders first. Optional; every other PageBuilder caller is unaffected.
  * @param {Object} props.options
  * @param {Object<string,FieldComponentConfig>} props.options.fieldComponents custom field components
  * @returns {JSX.Element} page component
@@ -109,6 +114,7 @@ const PageBuilder = props => {
     options,
     currentPage,
     featuredListings,
+    beforeMainContent = null,
     ...pageProps
   } = props;
 
@@ -138,6 +144,7 @@ const PageBuilder = props => {
                 <TopbarContainer currentPage={currentPage} />
               </Topbar>
               <Main as="main" id="main-content" className={css.main}>
+                {beforeMainContent}
                 {sections.length === 0 && inProgress ? (
                   <LoadingSpinner />
                 ) : (

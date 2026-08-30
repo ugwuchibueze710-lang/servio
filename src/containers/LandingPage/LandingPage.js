@@ -28,25 +28,26 @@ export const LandingPageComponent = props => {
   // on top of it: the hosted CMS "sections" for this page (the old "Why Choose Servio" / "For
   // Customers" / "For Providers" / "How Servio Works" content) are intentionally not rendered
   // here anymore. We still pass `meta` through untouched so page title/description/social-share
-  // tags keep working, and PageBuilder is still used as-is (unmodified) so the site's shared
-  // Topbar and Footer keep rendering exactly like they do on every other page - only the
-  // marketing body content in between them is suppressed. Nothing about the hosted asset itself
-  // changes; a marketplace operator could still re-enable it by rendering `sections` again here.
+  // tags keep working. Nothing about the hosted asset itself changes; a marketplace operator
+  // could still re-enable it by rendering `sections` again here.
   const landingPageDataWithoutMarketingSections = landingPageData
     ? { ...landingPageData, sections: [] }
     : landingPageData;
 
   return (
-    <>
-      <CategoryHero />
-      <PageBuilder
-        pageAssetsData={landingPageDataWithoutMarketingSections}
-        inProgress={inProgress}
-        error={error}
-        fallbackPage={<FallbackPage error={error} />}
-        featuredListings={getFeaturedListingsProps(camelize(ASSET_NAME), props)}
-      />
-    </>
+    <PageBuilder
+      pageAssetsData={landingPageDataWithoutMarketingSections}
+      inProgress={inProgress}
+      error={error}
+      fallbackPage={<FallbackPage error={error} />}
+      featuredListings={getFeaturedListingsProps(camelize(ASSET_NAME), props)}
+      // CategoryHero renders inside PageBuilder's own <Main> area (via this slot) instead of as
+      // a sibling placed in front of the whole page. PageBuilder is what renders the shared,
+      // sticky Topbar - rendering CategoryHero as an earlier sibling meant the header always
+      // ended up positioned BELOW the entire category grid instead of at the top of the page.
+      // This fixes that while leaving PageBuilder's Topbar/Footer/meta wiring untouched.
+      beforeMainContent={<CategoryHero />}
+    />
   );
 };
 
