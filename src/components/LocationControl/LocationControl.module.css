@@ -1,0 +1,133 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey500);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+}
+
+.inputWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 90px 10px 12px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--colorGrey700);
+  background-color: var(--colorWhite);
+}
+
+.input:disabled {
+  background-color: var(--colorGrey50);
+  color: var(--colorGrey700);
+  cursor: default;
+}
+
+.lockButton,
+.lockButtonLocked {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: var(--fontWeightSemiBold);
+  cursor: pointer;
+}
+
+.lockButton {
+  background-color: var(--colorGrey100);
+  color: var(--colorGrey700);
+}
+
+.lockButtonLocked {
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background-color: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.suggestion {
+  padding: 8px 12px;
+  font-size: 14px;
+  color: var(--colorGrey700);
+  cursor: pointer;
+}
+
+.suggestion:hover {
+  background-color: var(--colorGrey50);
+}
+
+.currentLocationButton {
+  border: none;
+  background: none;
+  color: var(--marketplaceColor);
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0;
+}
+
+.radiusRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.radiusSelect {
+  padding: 8px 10px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--colorGrey700);
+  background-color: var(--colorWhite);
+}
+
+.statusText {
+  font-size: 12px;
+  color: var(--colorGrey500);
+}
+
+.errorText {
+  font-size: 12px;
+  color: var(--colorFail);
+}

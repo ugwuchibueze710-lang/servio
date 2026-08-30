@@ -13,10 +13,11 @@ import { NamedRedirect } from '../components';
 const pageDataLoadingAPI = getPageDataLoadingAPI();
 
 const AuthenticationPage = loadable(() => import(/* webpackChunkName: "AuthenticationPage" */ '../containers/AuthenticationPage/AuthenticationPage'));
-// Note: a temporary no-email 'TesterAuthPage' used to be linked at /login, /signup and
+// Note: a temporary no-email 'TesterAuthPage' used to briefly stand in for /login, /signup and
 // /signup/:userType while Sharetribe auth was disconnected for early testing. It's back to
-// AuthenticationPage now (see MIGRATION_PLAN.md); TesterAuthPage.js itself is left in the repo,
-// unused, in case a no-email test flow is needed again later - just re-point these routes to it.
+// AuthenticationPage now; TesterAuthPage.js itself, and the parallel V2 no-password test-signup
+// stack, have since been removed entirely as fake/throwaway auth paths - see
+// AuthenticationPageV2.js for the real, password-based V2 sign up/sign in.
 const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" */ '../containers/CheckoutPage/CheckoutPage'));
 const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../containers/CMSPage/CMSPage'));
 const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDetailsPage" */ '../containers/ContactDetailsPage/ContactDetailsPage'));
@@ -51,6 +52,15 @@ const ProviderSearchPageV2 = loadable(() =>
 const ProviderProfilePageV2 = loadable(() =>
   import(/* webpackChunkName: "ProviderProfilePageV2" */ '../containers/ProviderProfilePageV2/ProviderProfilePageV2')
 );
+const ProviderPublicProfilePageV2 = loadable(() =>
+  import(/* webpackChunkName: "ProviderPublicProfilePageV2" */ '../containers/ProviderPublicProfilePageV2/ProviderPublicProfilePageV2')
+);
+const ProjectPassportPageV2 = loadable(() =>
+  import(/* webpackChunkName: "ProjectPassportPageV2" */ '../containers/ProjectPassportPageV2/ProjectPassportPageV2')
+);
+const NotificationsPageV2 = loadable(() =>
+  import(/* webpackChunkName: "NotificationsPageV2" */ '../containers/NotificationsPageV2/NotificationsPageV2')
+);
 const BookingRequestPageV2 = loadable(() =>
   import(/* webpackChunkName: "BookingRequestPageV2" */ '../containers/BookingRequestPageV2/BookingRequestPageV2')
 );
@@ -60,8 +70,8 @@ const MyBookingsPageV2 = loadable(() =>
 const ProviderInboxPageV2 = loadable(() =>
   import(/* webpackChunkName: "ProviderInboxPageV2" */ '../containers/ProviderInboxPageV2/ProviderInboxPageV2')
 );
-const TestSignInPageV2 = loadable(() =>
-  import(/* webpackChunkName: "TestSignInPageV2" */ '../containers/TestSignInPageV2/TestSignInPageV2')
+const AuthenticationPageV2 = loadable(() =>
+  import(/* webpackChunkName: "AuthenticationPageV2" */ '../containers/AuthenticationPageV2/AuthenticationPageV2')
 );
 const SearchPageWithMap = loadable(() => import(/* webpackChunkName: "SearchPageWithMap" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithMap'));
 const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPageWithGrid" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithGrid'));
@@ -318,13 +328,13 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     // frontend (backend has been built/tested since an earlier phase - see MIGRATION_PLAN.md).
     // Not linked from anywhere in the live UI yet; reached only by navigating to these paths
     // directly, same "parallel, unlinked route" pattern as /ride-v2 and /drive-v2 above.
-    // Sign in for the whole -v2 set (test mode: name + email, no password - see
-    // TestSignInPageV2.js). Deliberately public and NOT gated by Sharetribe's `auth`/`authPage`
-    // mechanism - it IS the way in for this parallel backend.
+    // Real sign up / sign in for the whole -v2 set (email + password, backed by real
+    // bcrypt-hashed AppUser accounts - see AuthenticationPageV2.js). Deliberately public and NOT
+    // gated by Sharetribe's `auth`/`authPage` mechanism - it IS the way in for this backend.
     {
       path: '/auth-v2',
-      name: 'TestSignInPageV2',
-      component: TestSignInPageV2,
+      name: 'AuthenticationPageV2',
+      component: AuthenticationPageV2,
     },
     // No `auth: true` here anymore - that gate was Sharetribe's own login state (state.auth),
     // which the new backend doesn't require at all now that /auth-v2 exists. The page itself
@@ -339,6 +349,24 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/providers-v2/:categorySlug',
       name: 'ProviderSearchPageV2',
       component: ProviderSearchPageV2,
+    },
+    {
+      path: '/provider-v2/:businessId',
+      name: 'ProviderPublicProfilePageV2',
+      component: ProviderPublicProfilePageV2,
+    },
+    {
+      path: '/booking-v2/:bookingId',
+      name: 'ProjectPassportPageV2',
+      component: ProjectPassportPageV2,
+      prioritizeLibraryLoading: {
+        stripe: true,
+      },
+    },
+    {
+      path: '/notifications-v2',
+      name: 'NotificationsPageV2',
+      component: NotificationsPageV2,
     },
 
     // New-backend booking request/inbox - Phase 4's still-missing frontend (backend has been

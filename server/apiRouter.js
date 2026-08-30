@@ -32,22 +32,36 @@ const authSignupV2 = require('./api/v2/auth/signup');
 const authLoginV2 = require('./api/v2/auth/login');
 const authMeV2 = require('./api/v2/auth/me');
 const authBridgeV2 = require('./api/v2/auth/bridge');
-const authTestSignupV2 = require('./api/v2/auth/testSignup');
-// Temporary, no-email tester sign up/log in - see server/state/testerAccounts.js and
-// MIGRATION_PLAN.md. Entirely separate from the Sharetribe and AppUser auth above.
-const testerAuthSignup = require('./api/v2/testerAuth/signup');
-const testerAuthMe = require('./api/v2/testerAuth/me');
-const testerAuthLogout = require('./api/v2/testerAuth/logout');
-const { requireAuth } = require('./middleware/authenticate');
+const { requireAuth, optionalAuth } = require('./middleware/authenticate');
 const providersUpsertMeV2 = require('./api/v2/providers/upsertMe');
 const providersGetMeV2 = require('./api/v2/providers/getMe');
+const providersSetAcceptingJobsV2 = require('./api/v2/providers/setAcceptingJobs');
 const providersGetOneV2 = require('./api/v2/providers/getOne');
 const searchProvidersV2 = require('./api/v2/search/providers');
 const bookingsCreateV2 = require('./api/v2/bookings/create');
 const bookingsListMineV2 = require('./api/v2/bookings/listMine');
 const bookingsListInboxV2 = require('./api/v2/bookings/listInbox');
+const bookingsGetOneV2 = require('./api/v2/bookings/getOne');
 const bookingsRespondV2 = require('./api/v2/bookings/respond');
 const bookingsUpdateStatusV2 = require('./api/v2/bookings/updateStatus');
+const messagesSendV2 = require('./api/v2/messages/send');
+const messagesListV2 = require('./api/v2/messages/list');
+const bookingsConfirmV2 = require('./api/v2/bookings/confirm');
+const bookingsDisputeV2 = require('./api/v2/bookings/dispute');
+const bookingsDisputeRespondV2 = require('./api/v2/bookings/disputeRespond');
+const adminResolveDisputeV2 = require('./api/v2/admin/bookings/resolveDispute');
+const notificationsListV2 = require('./api/v2/notifications/list');
+const notificationsMarkReadV2 = require('./api/v2/notifications/markRead');
+const meUpdateLocationV2 = require('./api/v2/me/updateLocation');
+const meSetModeV2 = require('./api/v2/me/setMode');
+const savedProvidersAddV2 = require('./api/v2/me/savedProviders/add');
+const savedProvidersRemoveV2 = require('./api/v2/me/savedProviders/remove');
+const savedProvidersListV2 = require('./api/v2/me/savedProviders/list');
+const uploadsCreateV2 = require('./api/v2/uploads/create');
+const uploadsGetV2 = require('./api/v2/uploads/get');
+const uploadsDeleteV2 = require('./api/v2/uploads/deleteFile');
+const upload = require('./middleware/upload');
+const searchSmartV2 = require('./api/v2/search/smart');
 const driversUpsertMeV2 = require('./api/v2/drivers/upsertMe');
 const driversGetMeV2 = require('./api/v2/drivers/getMe');
 const driversSetStatusV2 = require('./api/v2/drivers/setStatus');
@@ -61,6 +75,8 @@ const ridesUpdateStatusV2 = require('./api/v2/rides/updateStatus');
 const driversUpdateLocationV2 = require('./api/v2/drivers/updateLocation');
 const paymentsCreateBookingIntentV2 = require('./api/v2/payments/createBookingIntent');
 const paymentsCreateRideIntentV2 = require('./api/v2/payments/createRideIntent');
+const paymentsConnectOnboardV2 = require('./api/v2/payments/connectOnboard');
+const paymentsConnectStatusV2 = require('./api/v2/payments/connectStatus');
 const paymentsWebhookV2 = require('./api/v2/payments/webhook');
 const reviewsCreateBookingV2 = require('./api/v2/reviews/createBookingReview');
 const reviewsCreateRideV2 = require('./api/v2/reviews/createRideReview');
@@ -148,19 +164,17 @@ router.get('/v2/auth/me', requireAuth, authMeV2);
 // ride-initiate-privileged.js / delete-account.js) and hands back a JWT once it's verified who
 // is really asking. See server/api/v2/auth/bridge.js for the full rationale.
 router.post('/v2/auth/bridge', authBridgeV2);
-// Also no requireAuth here - this IS the login mechanism (test mode: name + email, no password).
-// See server/api/v2/auth/testSignup.js for the full rationale.
-router.post('/v2/auth/test-signup', authTestSignupV2);
-
-router.post('/v2/tester-auth/signup', testerAuthSignup);
-router.get('/v2/tester-auth/me', testerAuthMe);
-router.post('/v2/tester-auth/logout', testerAuthLogout);
+// Real signup/login (email + password, bcrypt-backed AppUser accounts) are registered above -
+// authSignupV2/authLoginV2. The old in-memory "tester" auth stack and passwordless test-signup
+// shim have been removed: they were explicitly throwaway/fake sign-in paths, which contradicts
+// this app's real-functionality-only requirement. See AuthenticationPageV2.js for the real UI.
 
 // Phase 3 of the Sharetribe migration (see MIGRATION_PLAN.md): real provider profiles and
 // geospatial search. Search is public; creating/editing your own profile requires auth.
 router.post('/v2/providers/me', requireAuth, providersUpsertMeV2);
 router.get('/v2/providers/me', requireAuth, providersGetMeV2);
-router.get('/v2/providers/:id', providersGetOneV2);
+router.patch('/v2/providers/me/accepting-jobs', requireAuth, providersSetAcceptingJobsV2);
+router.get('/v2/providers/:id', optionalAuth, providersGetOneV2);
 router.get('/v2/search/providers', searchProvidersV2);
 
 // Phase 4 of the Sharetribe migration (see MIGRATION_PLAN.md): the real booking lifecycle -
@@ -168,8 +182,43 @@ router.get('/v2/search/providers', searchProvidersV2);
 router.post('/v2/bookings', requireAuth, bookingsCreateV2);
 router.get('/v2/bookings/mine', requireAuth, bookingsListMineV2);
 router.get('/v2/bookings/inbox', requireAuth, bookingsListInboxV2);
+router.get('/v2/bookings/:id', requireAuth, bookingsGetOneV2);
 router.post('/v2/bookings/:id/respond', requireAuth, bookingsRespondV2);
 router.post('/v2/bookings/:id/status', requireAuth, bookingsUpdateStatusV2);
+// Real, persisted messaging tied to one booking (Project Passport) - see server/models/Message.js.
+router.post('/v2/bookings/:id/messages', requireAuth, messagesSendV2);
+router.get('/v2/bookings/:id/messages', requireAuth, messagesListV2);
+// Job-completion confirm/dispute (spec section 33/34) - separate from the generic
+// updateStatus.js because each needs extra logic (payout release, dispute reason).
+router.post('/v2/bookings/:id/confirm', requireAuth, bookingsConfirmV2);
+router.post('/v2/bookings/:id/dispute', requireAuth, bookingsDisputeV2);
+router.post('/v2/bookings/:id/dispute/respond', requireAuth, bookingsDisputeRespondV2);
+router.patch('/v2/admin/bookings/:id/resolve-dispute', requireAuth, requireAdmin, adminResolveDisputeV2);
+
+// Real, persisted notifications (spec section 40).
+router.get('/v2/notifications', requireAuth, notificationsListV2);
+router.patch('/v2/notifications/:id/read', requireAuth, notificationsMarkReadV2);
+
+// Real, persisted customer location preference (spec sections 6-8) - label/coordinates/radius/
+// locked, always Mapbox-resolved coordinates, never raw text alone.
+router.patch('/v2/me/location', requireAuth, meUpdateLocationV2);
+router.patch('/v2/me/mode', requireAuth, meSetModeV2);
+
+// Real saved/favorite providers (spec section 21).
+router.get('/v2/me/saved-providers', requireAuth, savedProvidersListV2);
+router.post('/v2/me/saved-providers/:businessId', requireAuth, savedProvidersAddV2);
+router.delete('/v2/me/saved-providers/:businessId', requireAuth, savedProvidersRemoveV2);
+
+// Real file uploads via MongoDB GridFS (spec section 38) - no extra credential needed
+// beyond MONGODB_URI. Public purposes (profile/portfolio images) are servable to anyone;
+// private purposes (project photos, completion evidence) are authorization-checked in
+// uploadsGetV2 itself.
+router.post('/v2/uploads', requireAuth, upload.single('file'), uploadsCreateV2);
+router.get('/v2/uploads/:id', optionalAuth, uploadsGetV2);
+router.delete('/v2/uploads/:id', requireAuth, uploadsDeleteV2);
+
+// Groq-powered smart search (optional auth: works signed-out, persists history when signed in).
+router.post('/v2/search/smart', optionalAuth, searchSmartV2);
 
 // Phase 5 of the Sharetribe migration (see MIGRATION_PLAN.md): driver onboarding, the
 // online/offline toggle, and real ride matching (geospatial nearby-driver search + an atomic
@@ -198,6 +247,10 @@ router.patch('/v2/drivers/me/location', requireAuth, driversUpdateLocationV2);
 // is the actual source of truth for paymentStatus - these two only create the PaymentIntent.
 router.post('/v2/payments/bookings/:id/intent', requireAuth, paymentsCreateBookingIntentV2);
 router.post('/v2/payments/rides/:id/intent', requireAuth, paymentsCreateRideIntentV2);
+// Stripe Connect onboarding for providers (spec section 32) - account creation + a real
+// Stripe-hosted onboarding link, and a status check re-synced from Stripe on every call.
+router.post('/v2/payments/connect/onboard', requireAuth, paymentsConnectOnboardV2);
+router.get('/v2/payments/connect/status', requireAuth, paymentsConnectStatusV2);
 
 // Phase 7 of the Sharetribe migration (see MIGRATION_PLAN.md): reviews tied only to
 // completed bookings/rides - the completed-status check happens server-side, never trusted

@@ -10,11 +10,13 @@ const Booking = require('../../../models/Booking');
 const Business = require('../../../models/Business');
 const Category = require('../../../models/Category');
 const { isConnected, connect } = require('../../../db/mongoose');
+const { notify } = require('../../../utils/notify');
 
 module.exports = async (req, res) => {
   const {
     businessId,
     categorySlug,
+    serviceId,
     description,
     locationLabel,
     lat,
@@ -82,6 +84,13 @@ module.exports = async (req, res) => {
         .json({ error: 'business_not_found', message: 'This business could not be found.' });
       return;
     }
+    if (!business.acceptingNewJobs) {
+      res.status(409).json({
+        error: 'not_accepting_jobs',
+        message: 'This provider is not accepting new requests right now.',
+      });
+      return;
+    }
 
     const category = await Category.findOne({ slug: categorySlug, active: true });
     if (!category) {
@@ -100,10 +109,29 @@ module.exports = async (req, res) => {
       return;
     }
 
+    // Optional specific-service selection (spec section 11/17): if provided, it must be a real,
+    // currently-active service this business actually lists - never trusted blindly from the
+    // client - so the eventual quote/price conversation has a concrete, agreed-upon starting
+    // point rather than just a bare category.
+    let serviceDoc;
+    if (serviceId) {
+      serviceDoc = (business.services || []).find(
+        s => String(s._id) === String(serviceId) && s.active !== false
+      );
+      if (!serviceDoc) {
+        res.status(400).json({
+          error: 'invalid_service',
+          message: 'That service is not currently offered by this provider.',
+        });
+        return;
+      }
+    }
+
     const booking = await Booking.create({
       customer: req.appUser._id,
       business: business._id,
       category: category._id,
+      service: serviceDoc ? serviceDoc._id : undefined,
       description: trimmedDescription,
       photos: Array.isArray(photos) ? photos.filter(p => p && typeof p.url === 'string') : [],
       location: latNum !== undefined ? { type: 'Point', coordinates: [lngNum, latNum] } : undefined,
@@ -112,6 +140,17 @@ module.exports = async (req, res) => {
       requestedTimeNote: typeof requestedTimeNote === 'string' ? requestedTimeNote.trim() : undefined,
       budgetNote: typeof budgetNote === 'string' ? budgetNote.trim() : undefined,
       additionalNotes: typeof additionalNotes === 'string' ? additionalNotes.trim() : undefined,
+    });
+
+    business.requestsReceivedCount += 1;
+    await business.save();
+
+    await notify({
+      recipient: business.owner,
+      type: 'new_request',
+      booking: booking._id,
+      title: 'New service request',
+      body: trimmedDescription.slice(0, 140),
     });
 
     res.status(201).json({ booking });

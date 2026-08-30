@@ -11,7 +11,7 @@ const Booking = require('../../../models/Booking');
 const { getStripeClient } = require('../../../utils/stripeClient');
 const { isConnected, connect } = require('../../../db/mongoose');
 
-const PAYABLE_STATUSES = ['accepted', 'scheduled', 'in_progress', 'completed'];
+const PAYABLE_STATUSES = ['accepted', 'scheduled', 'in_progress', 'completed_pending_confirmation'];
 const OPEN_INTENT_STATUSES = ['requires_payment_method', 'requires_confirmation', 'requires_action'];
 
 module.exports = async (req, res) => {

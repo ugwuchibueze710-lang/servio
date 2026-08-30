@@ -8,8 +8,37 @@
   margin-bottom: 16px;
 }
 
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--colorGrey100);
+  margin-bottom: 20px;
+}
+
+.tab,
+.tabActive {
+  padding: 10px 4px;
+  margin-right: 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey500);
+  cursor: pointer;
+}
+
+.tabActive {
+  color: var(--marketplaceColor);
+  border-bottom-color: var(--marketplaceColor);
+}
+
 .errorText {
-  color: #b91c1c;
+  color: var(--colorFail);
+}
+
+.sectionTitle {
+  font-size: 17px;
+  margin: 20px 0 12px;
 }
 
 .list {
@@ -18,65 +47,74 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 16px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
+  padding: 4px;
+}
+
+.cardLink {
+  display: block;
+  padding: 12px;
+  text-decoration: none;
+  color: inherit;
 }
 
 .businessName {
-  font-weight: 700;
-  font-size: 18px;
+  font-weight: var(--fontWeightBold);
+  font-size: 17px;
   margin: 0 0 4px;
 }
 
 .category {
-  color: #6b7280;
+  color: var(--colorGrey500);
   font-size: 14px;
   margin: 0 0 8px;
 }
 
 .description {
   margin: 0 0 8px;
+  color: var(--colorGrey700);
 }
 
 .status {
-  font-weight: 600;
-  margin: 0 0 4px;
+  font-weight: var(--fontWeightSemiBold);
+  margin: 8px 0 0;
 }
 
 .price {
-  color: #4a4a4a;
-  margin: 0 0 12px;
+  margin: 4px 0 0;
+  color: var(--colorGrey600);
+  font-size: 14px;
 }
 
-.primaryButton {
-  padding: 10px 20px;
-  border-radius: 4px;
-  border: none;
-  background: #111827;
-  color: #fff;
+.bookAgainLink {
+  display: inline-block;
+  margin: 0 12px 12px;
+  padding: 8px 14px;
+  border-radius: var(--borderRadiusMedium);
+  border: 1px solid var(--marketplaceColor);
+  color: var(--marketplaceColor);
+  text-decoration: none;
+  font-weight: var(--fontWeightSemiBold);
+  font-size: 14px;
+}
+
+.savedActions {
+  display: flex;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.unsaveButton {
+  padding: 8px 14px;
+  border-radius: var(--borderRadiusMedium);
+  border: 1px solid var(--colorGrey200);
+  background: var(--colorWhite);
+  color: var(--colorGrey600);
   cursor: pointer;
-  font-weight: 600;
-}
-
-.primaryButton:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.secondaryButton {
-  padding: 8px 16px;
-  border-radius: 4px;
-  border: 1px solid #4a4a4a;
-  background: #fff;
-  cursor: pointer;
-  margin-top: 8px;
-}
-
-.paymentBox {
-  margin-top: 12px;
+  font-size: 14px;
 }

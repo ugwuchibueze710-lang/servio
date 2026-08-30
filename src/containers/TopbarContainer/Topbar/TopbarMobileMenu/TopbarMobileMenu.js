@@ -19,6 +19,7 @@ import {
 } from '../../../../components';
 
 import ModeBadge from '../../../../components/ModeBadge/ModeBadge';
+import AccountMenuV2 from '../../../../components/AccountMenuV2/AccountMenuV2';
 
 import css from './TopbarMobileMenu.module.css';
 
@@ -138,6 +139,9 @@ const TopbarMobileMenu = props => {
     return (
       <nav className={css.root}>
         <div className={css.content}>
+          <div className={css.accountMenuV2Wrapper}>
+            <AccountMenuV2 />
+          </div>
           <div className={css.authenticationGreeting}>
             <FormattedMessage
               id="TopbarMobileMenu.unauthorizedGreeting"
@@ -207,6 +211,9 @@ const TopbarMobileMenu = props => {
 
   return (
     <div className={css.root}>
+      <div className={css.accountMenuV2Wrapper}>
+        <AccountMenuV2 />
+      </div>
       <AvatarLarge className={css.avatar} user={currentUser} />
       <div className={css.content}>
         <span className={css.greeting}>

@@ -19,6 +19,7 @@ import {
 import TopbarSearchForm from '../TopbarSearchForm/TopbarSearchForm';
 import CustomLinksMenu from './CustomLinksMenu/CustomLinksMenu';
 import ModeBadge from '../../../../components/ModeBadge/ModeBadge';
+import AccountMenuV2 from '../../../../components/AccountMenuV2/AccountMenuV2';
 
 import css from './TopbarDesktop.module.css';
 
@@ -310,6 +311,7 @@ const TopbarDesktop = props => {
       {profileMenuMaybe}
       {signupLinkMaybe}
       {loginLinkMaybe}
+      <AccountMenuV2 />
     </nav>
   );
 };

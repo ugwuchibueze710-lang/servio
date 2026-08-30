@@ -1,0 +1,121 @@
+.root {
+  min-height: calc(100vh - 200px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--colorWhite);
+  border-radius: var(--borderRadiusMedium);
+  box-shadow: var(--boxShadow);
+  padding: 32px;
+}
+
+.heading {
+  margin: 0 0 12px;
+}
+
+.text {
+  color: var(--colorGrey700);
+  margin: 0 0 20px;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--colorGrey100);
+  margin-bottom: 24px;
+}
+
+.tab,
+.tabActive {
+  flex: 1;
+  padding: 12px 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey500);
+  cursor: pointer;
+}
+
+.tabActive {
+  color: var(--marketplaceColor);
+  border-bottom-color: var(--marketplaceColor);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nameRow {
+  display: flex;
+  gap: 12px;
+}
+
+.input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--colorGrey200);
+  border-radius: var(--borderRadiusMedium);
+  font-size: 16px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--marketplaceColor);
+}
+
+.errorText {
+  color: var(--colorFail);
+  margin: 0;
+  font-size: 14px;
+}
+
+.switchPrompt {
+  margin-top: 20px;
+  text-align: center;
+  color: var(--colorGrey700);
+  font-size: 14px;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightSemiBold);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.primaryLink,
+.secondaryLink {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border-radius: var(--borderRadiusMedium);
+  text-decoration: none;
+  font-weight: var(--fontWeightSemiBold);
+}
+
+.primaryLink {
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
+}
+
+.secondaryLink {
+  border: 1px solid var(--colorGrey200);
+  color: var(--colorGrey700);
+}

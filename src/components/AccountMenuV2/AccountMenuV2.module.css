@@ -1,0 +1,72 @@
+.menuLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.menuLabel:hover {
+  background: var(--colorGrey50);
+}
+
+.menuLabelOpen {
+  background: var(--colorGrey100);
+}
+
+.hamburger {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 18px;
+}
+
+.hamburger span {
+  display: block;
+  height: 2px;
+  background: var(--colorGrey700);
+  border-radius: 1px;
+}
+
+.menuContent {
+  min-width: 220px;
+  padding: 8px 0;
+}
+
+.userInfoItem {
+  padding: 10px 20px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+  border-bottom: 1px solid var(--colorGrey100);
+  margin-bottom: 6px;
+}
+
+.menuLink {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  color: var(--colorGrey700);
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.menuLink:hover {
+  background: var(--colorGrey50);
+}
+
+.unreadBadge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-size: 11px;
+  font-weight: var(--fontWeightSemiBold);
+  vertical-align: middle;
+}

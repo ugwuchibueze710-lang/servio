@@ -27,7 +27,11 @@ module.exports = async (req, res) => {
     pricingNote,
     availabilityNote,
     contactPhone,
+    publishPhone,
     profileImageUrl,
+    acceptingNewJobs,
+    services,
+    portfolioImages,
   } = req.body || {};
 
   const trimmedName = typeof name === 'string' ? name.trim() : '';
@@ -105,6 +109,36 @@ module.exports = async (req, res) => {
     if (availabilityNote !== undefined) update.availabilityNote = String(availabilityNote).trim();
     if (contactPhone !== undefined) update.contactPhone = String(contactPhone).trim();
     if (profileImageUrl !== undefined) update.profileImageUrl = String(profileImageUrl).trim();
+    if (typeof publishPhone === 'boolean') update.publishPhone = publishPhone;
+    if (typeof acceptingNewJobs === 'boolean') update.acceptingNewJobs = acceptingNewJobs;
+    if (Array.isArray(portfolioImages)) {
+      update.portfolioImages = portfolioImages
+        .filter(p => p && typeof p.url === 'string')
+        .map(p => ({ url: p.url, caption: typeof p.caption === 'string' ? p.caption.slice(0, 200) : undefined }));
+    }
+    if (Array.isArray(services)) {
+      const PRICING_TYPES = ['fixed', 'starting_at', 'range', 'hourly', 'per_unit', 'request_quote'];
+      const validServiceCategoryIds = new Set(categoryDocs.map(c => String(c._id)));
+      const cleanedServices = [];
+      for (const s of services) {
+        if (!s || typeof s.name !== 'string' || !s.name.trim()) continue;
+        if (!s.category || !validServiceCategoryIds.has(String(s.category))) continue;
+        if (!PRICING_TYPES.includes(s.pricingType)) continue;
+        cleanedServices.push({
+          category: s.category,
+          name: s.name.trim().slice(0, 160),
+          description: typeof s.description === 'string' ? s.description.trim().slice(0, 600) : undefined,
+          pricingType: s.pricingType,
+          fixedPrice: Number.isFinite(Number(s.fixedPrice)) ? Number(s.fixedPrice) : undefined,
+          priceMin: Number.isFinite(Number(s.priceMin)) ? Number(s.priceMin) : undefined,
+          priceMax: Number.isFinite(Number(s.priceMax)) ? Number(s.priceMax) : undefined,
+          hourlyRate: Number.isFinite(Number(s.hourlyRate)) ? Number(s.hourlyRate) : undefined,
+          unitLabel: typeof s.unitLabel === 'string' ? s.unitLabel.trim().slice(0, 40) : undefined,
+          active: s.active !== false,
+        });
+      }
+      update.services = cleanedServices;
+    }
 
     let business = await Business.findOne({ owner: req.appUser._id });
     let created = false;

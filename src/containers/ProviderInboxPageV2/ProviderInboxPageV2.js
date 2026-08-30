@@ -1,81 +1,58 @@
 /**
  * src/containers/ProviderInboxPageV2/ProviderInboxPageV2.js
  *
- * A provider's real inbox - accept (with a real quoted price)/decline pending requests, and
- * advance accepted work through scheduled -> in progress -> completed. See .duck.js header.
+ * The real provider dashboard (spec sections 26-28): metrics computed from actual data (never
+ * hardcoded) - profile views, response rate/time, completed jobs, cancellation rate, and real
+ * lifetime earnings summed from this provider's own paid_out bookings - plus the real
+ * "Accepting New Jobs" gate and the request/job list. Every row links into the real Project
+ * Passport page for all actions (accept/quote/schedule/complete/cancel/messages) - this page
+ * itself is read-only + the one toggle, on purpose, so there is exactly one place that drives a
+ * booking's status forward.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
-import {
-  CANCELLABLE_STATUSES,
-  PROVIDER_NEXT_STATUS,
-  PROVIDER_NEXT_STATUS_LABEL,
-} from '../../booking/bookingProcessV2';
-import {
-  fetchInboxV2Thunk,
-  respondBookingV2Thunk,
-  advanceBookingStatusV2Thunk,
-} from './ProviderInboxPageV2.duck';
+import { fetchMyBusinessV2Thunk, fetchInboxV2Thunk, setAcceptingJobsV2Thunk } from './ProviderInboxPageV2.duck';
 
 import css from './ProviderInboxPageV2.module.css';
 
 const STATUS_LABELS = {
   requested: 'New request',
-  accepted: 'Accepted',
+  accepted: 'Accepted - awaiting payment',
   declined: 'Declined',
   scheduled: 'Scheduled',
   in_progress: 'In progress',
-  completed: 'Completed',
+  completed_pending_confirmation: 'Awaiting customer confirmation',
+  confirmed: 'Confirmed',
+  paid_out: 'Paid out',
+  disputed: 'Disputed',
   cancelled: 'Cancelled',
+};
+
+const formatHours = ms => {
+  if (!ms) return '—';
+  const hours = ms / (1000 * 60 * 60);
+  return hours < 1 ? `${Math.round(ms / 60000)} min` : `${hours.toFixed(1)} hrs`;
 };
 
 const ProviderInboxPageV2 = () => {
   const dispatch = useDispatch();
   const page = useSelector(state => state.ProviderInboxPageV2);
-  // Real quoted-price input per pending booking, keyed by booking id - not submitted until the
-  // provider actually clicks Accept, so a half-typed price never gets sent early.
-  const [quotedPrices, setQuotedPrices] = useState({});
 
   useEffect(() => {
+    dispatch(fetchMyBusinessV2Thunk());
     dispatch(fetchInboxV2Thunk());
   }, [dispatch]);
 
-  const handleAccept = bookingId => {
-    const price = Number(quotedPrices[bookingId]);
-    dispatch(
-      respondBookingV2Thunk({
-        bookingId,
-        action: 'accept',
-        quotedPrice: Number.isFinite(price) && price > 0 ? price : undefined,
-      })
-    );
-  };
-
-  const handleDecline = bookingId => {
-    dispatch(respondBookingV2Thunk({ bookingId, action: 'decline' }));
-  };
-
-  const handleAdvance = (bookingId, status) => {
-    dispatch(advanceBookingStatusV2Thunk({ bookingId, status }));
-  };
-
-  const handleCancel = bookingId => {
-    dispatch(advanceBookingStatusV2Thunk({ bookingId, status: 'cancelled' }));
-  };
-
-  if (page.fetchInProgress && page.data.length === 0) {
-    return (
-      <div className={css.root}>
-        <p>Loading your inbox...</p>
-      </div>
-    );
+  if (page.fetchBusinessInProgress && !page.business) {
+    return <div className={css.root}><p>Loading your dashboard...</p></div>;
   }
 
-  if (page.noProviderProfileMessage) {
+  if (!page.business) {
     return (
       <div className={css.root}>
-        <p>{page.noProviderProfileMessage}</p>
+        <p>You don&apos;t have a provider profile yet.</p>
         <a className={css.link} href="/provider-profile-v2">
           Set up your provider profile
         </a>
@@ -83,99 +60,114 @@ const ProviderInboxPageV2 = () => {
     );
   }
 
+  const { business, data } = page;
+  const responseRate = business.requestsReceivedCount > 0
+    ? Math.round((business.requestsRespondedCount / business.requestsReceivedCount) * 100)
+    : null;
+  const avgResponseTime = business.requestsRespondedCount > 0
+    ? formatHours(business.totalResponseTimeMs / business.requestsRespondedCount)
+    : '—';
+  const totalJobs = business.completedJobsCount + business.cancelledJobsCount;
+  const cancellationRate = totalJobs > 0 ? Math.round((business.cancelledJobsCount / totalJobs) * 100) : null;
+  const lifetimeEarnings = data
+    .filter(b => b.status === 'paid_out' && typeof b.providerPayoutAmount === 'number')
+    .reduce((sum, b) => sum + b.providerPayoutAmount, 0);
+
+  const activeRequests = data.filter(b => !['declined', 'cancelled', 'paid_out'].includes(b.status));
+  const pastRequests = data.filter(b => ['declined', 'cancelled', 'paid_out'].includes(b.status));
+
   return (
     <div className={css.root}>
-      <h1 className={css.title}>Provider inbox</h1>
+      <div className={css.headerRow}>
+        <h1 className={css.title}>{business.name}</h1>
+        <label className={css.toggle}>
+          <input
+            type="checkbox"
+            checked={business.acceptingNewJobs}
+            disabled={page.toggleInProgress}
+            onChange={e => dispatch(setAcceptingJobsV2Thunk(e.target.checked))}
+          />
+          Accepting new jobs
+        </label>
+      </div>
+      {page.toggleError && <p className={css.errorText}>Could not update this setting. Please try again.</p>}
 
-      {page.fetchError && <p className={css.errorText}>Something went wrong loading your inbox.</p>}
-      {page.actionError && (
-        <p className={css.errorText}>
-          {page.actionError.message || 'Something went wrong. Please try again.'}
+      <div className={css.metricsGrid}>
+        <div className={css.metricCard}>
+          <p className={css.metricValue}>{business.profileViewCount}</p>
+          <p className={css.metricLabel}>Profile views</p>
+        </div>
+        <div className={css.metricCard}>
+          <p className={css.metricValue}>{responseRate !== null ? `${responseRate}%` : '—'}</p>
+          <p className={css.metricLabel}>Response rate</p>
+        </div>
+        <div className={css.metricCard}>
+          <p className={css.metricValue}>{avgResponseTime}</p>
+          <p className={css.metricLabel}>Avg. response time</p>
+        </div>
+        <div className={css.metricCard}>
+          <p className={css.metricValue}>{business.completedJobsCount}</p>
+          <p className={css.metricLabel}>Completed jobs</p>
+        </div>
+        <div className={css.metricCard}>
+          <p className={css.metricValue}>{cancellationRate !== null ? `${cancellationRate}%` : '—'}</p>
+          <p className={css.metricLabel}>Cancellation rate</p>
+        </div>
+        <div className={css.metricCard}>
+          <p className={css.metricValue}>{business.ratingCount > 0 ? business.ratingAvg.toFixed(1) : '—'}</p>
+          <p className={css.metricLabel}>Rating ({business.ratingCount})</p>
+        </div>
+        <div className={css.metricCard}>
+          <p className={css.metricValue}>${lifetimeEarnings.toFixed(2)}</p>
+          <p className={css.metricLabel}>Lifetime earnings</p>
+        </div>
+      </div>
+
+      {!business.stripeConnectPayoutsEnabled && (
+        <p className={css.warningBanner}>
+          Set up Stripe Connect in your provider settings to receive payouts.{' '}
+          <a href="/provider-profile-v2">Set up now</a>
         </p>
       )}
 
-      {!page.fetchInProgress && page.data.length === 0 && <p>No requests yet.</p>}
+      {page.fetchError && <p className={css.errorText}>Something went wrong loading your requests.</p>}
+      {page.noProviderProfileMessage && <p>{page.noProviderProfileMessage}</p>}
 
+      <h2 className={css.sectionTitle}>Active requests & jobs</h2>
+      {activeRequests.length === 0 && <p className={css.detail}>Nothing active right now.</p>}
       <ul className={css.list}>
-        {page.data.map(booking => {
-          const isActing = page.actionInProgressId === booking._id;
-          const nextStatus = PROVIDER_NEXT_STATUS[booking.status];
-          const canCancel = CANCELLABLE_STATUSES.includes(booking.status);
-
-          return (
-            <li key={booking._id} className={css.card}>
+        {activeRequests.map(booking => (
+          <li key={booking._id} className={css.card}>
+            <Link to={`/booking-v2/${booking._id}`} className={css.cardLink}>
               <p className={css.customerName}>
                 {booking.customer?.firstName} {booking.customer?.lastName}
               </p>
               <p className={css.category}>{booking.category?.name}</p>
               <p className={css.description}>{booking.description}</p>
-              {booking.locationLabel && <p className={css.detail}>{booking.locationLabel}</p>}
-              {booking.requestedDate && (
-                <p className={css.detail}>
-                  Requested for {new Date(booking.requestedDate).toLocaleDateString()}
-                  {booking.requestedTimeNote ? ` - ${booking.requestedTimeNote}` : ''}
-                </p>
-              )}
-              {booking.budgetNote && <p className={css.detail}>Budget: {booking.budgetNote}</p>}
               <p className={css.status}>{STATUS_LABELS[booking.status] || booking.status}</p>
-              {typeof booking.quotedPrice === 'number' && (
-                <p className={css.detail}>Quoted: ${booking.quotedPrice.toFixed(2)}</p>
-              )}
-
-              {booking.status === 'requested' && (
-                <div className={css.actionRow}>
-                  <input
-                    className={css.priceInput}
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="Quote a price ($)"
-                    value={quotedPrices[booking._id] || ''}
-                    onChange={e =>
-                      setQuotedPrices(prev => ({ ...prev, [booking._id]: e.target.value }))
-                    }
-                  />
-                  <button
-                    className={css.primaryButton}
-                    onClick={() => handleAccept(booking._id)}
-                    disabled={isActing}
-                  >
-                    Accept
-                  </button>
-                  <button
-                    className={css.secondaryButton}
-                    onClick={() => handleDecline(booking._id)}
-                    disabled={isActing}
-                  >
-                    Decline
-                  </button>
-                </div>
-              )}
-
-              {nextStatus && (
-                <div className={css.actionRow}>
-                  <button
-                    className={css.primaryButton}
-                    onClick={() => handleAdvance(booking._id, nextStatus)}
-                    disabled={isActing}
-                  >
-                    {PROVIDER_NEXT_STATUS_LABEL[nextStatus]}
-                  </button>
-                  {canCancel && (
-                    <button
-                      className={css.secondaryButton}
-                      onClick={() => handleCancel(booking._id)}
-                      disabled={isActing}
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              )}
-            </li>
-          );
-        })}
+            </Link>
+          </li>
+        ))}
       </ul>
+
+      {pastRequests.length > 0 && (
+        <>
+          <h2 className={css.sectionTitle}>Past</h2>
+          <ul className={css.list}>
+            {pastRequests.map(booking => (
+              <li key={booking._id} className={css.card}>
+                <Link to={`/booking-v2/${booking._id}`} className={css.cardLink}>
+                  <p className={css.customerName}>
+                    {booking.customer?.firstName} {booking.customer?.lastName}
+                  </p>
+                  <p className={css.category}>{booking.category?.name}</p>
+                  <p className={css.status}>{STATUS_LABELS[booking.status] || booking.status}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 };

@@ -7,6 +7,10 @@
  * directly to a "request booking" page for that provider, shouldn't need a Sharetribe session
  * just to see a public profile. Only returns active businesses - a deactivated provider is a
  * real 404, not a silently-served stale profile.
+ *
+ * Real, server-incremented profileViewCount (spec section 26) - counts once per request here,
+ * excluding the owner viewing their own profile (via optionalAuth's req.appUser, when present)
+ * so a provider checking their own listing doesn't inflate their own view metric.
  */
 const mongoose = require('mongoose');
 const Business = require('../../../models/Business');
@@ -37,6 +41,12 @@ module.exports = async (req, res) => {
       res.status(404).json({ error: 'business_not_found', message: 'This business could not be found.' });
       return;
     }
+
+    const isOwner = req.appUser && String(business.owner) === String(req.appUser._id);
+    if (!isOwner) {
+      Business.updateOne({ _id: business._id }, { $inc: { profileViewCount: 1 } }).catch(() => {});
+    }
+
     res.status(200).json({ business });
   } catch (err) {
     // eslint-disable-next-line no-console

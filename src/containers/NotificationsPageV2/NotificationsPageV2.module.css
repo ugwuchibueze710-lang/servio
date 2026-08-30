@@ -1,0 +1,123 @@
+.root {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+}
+
+.markAllButton {
+  border: 1px solid var(--colorGrey200);
+  background: var(--colorWhite);
+  border-radius: var(--borderRadiusMedium);
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  cursor: pointer;
+}
+
+.markAllButton:hover {
+  border-color: var(--marketplaceColor);
+  color: var(--marketplaceColor);
+}
+
+.statusText {
+  color: var(--colorGrey600);
+}
+
+.errorText {
+  color: var(--colorFail);
+}
+
+.emptyText {
+  color: var(--colorGrey600);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.item,
+.itemUnread {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
+  margin-bottom: 10px;
+}
+
+.itemUnread {
+  background: var(--colorGrey50);
+  border-color: var(--colorGrey200);
+}
+
+.itemLink {
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.itemType {
+  font-size: 12px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.itemWhen {
+  font-size: 12px;
+  color: var(--colorGrey400);
+  white-space: nowrap;
+}
+
+.itemTitle {
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey800);
+  margin-bottom: 2px;
+}
+
+.itemBody {
+  font-size: 14px;
+  color: var(--colorGrey600);
+}
+
+.markReadButton {
+  flex-shrink: 0;
+  border: 1px solid var(--colorGrey200);
+  background: var(--colorWhite);
+  border-radius: var(--borderRadiusMedium);
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.markReadButton:hover {
+  border-color: var(--marketplaceColor);
+  color: var(--marketplaceColor);
+}

@@ -1,53 +1,46 @@
 /**
  * src/containers/ProviderInboxPageV2/ProviderInboxPageV2.duck.js
  *
- * A provider's real inbox of booking requests against their own Business (Phase 4's other still-
- * missing frontend half - see MIGRATION_PLAN.md). Calls the real, tested GET /api/v2/bookings/
- * inbox, POST /api/v2/bookings/:id/respond (accept/decline), and POST /api/v2/bookings/:id/status
- * (advance to scheduled/in_progress/completed, or cancel).
+ * The real provider dashboard: this account's own Business profile (for real, server-computed
+ * metrics and the "Accepting New Jobs" toggle - spec sections 27/28) plus every booking made
+ * against it. Accept/decline/schedule/complete/cancel actions all now live on
+ * ProjectPassportPageV2 (one real place per job, not duplicated status-machine logic here and
+ * there - this used to have its own copy, which drifted out of sync with a real backend change
+ * and got removed as a stale/contradicting file, see src/booking/bookingProcessV2.js removal).
  */
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { apiV2, storableApiV2Error } from '../../util/apiV2';
 
+export const fetchMyBusinessV2Thunk = createAsyncThunk(
+  'providerInboxPageV2/fetchMyBusiness',
+  (_, { rejectWithValue }) => apiV2('/api/v2/providers/me').catch(e => rejectWithValue(storableApiV2Error(e)))
+);
+
 export const fetchInboxV2Thunk = createAsyncThunk(
   'providerInboxPageV2/fetchInbox',
-  (_, { rejectWithValue }) => {
-    return apiV2('/api/v2/bookings/inbox').catch(e => rejectWithValue(storableApiV2Error(e)));
-  }
+  (_, { rejectWithValue }) => apiV2('/api/v2/bookings/inbox').catch(e => rejectWithValue(storableApiV2Error(e)))
 );
 
-export const respondBookingV2Thunk = createAsyncThunk(
-  'providerInboxPageV2/respondBooking',
-  ({ bookingId, action, quotedPrice }, { rejectWithValue }) => {
-    return apiV2(`/api/v2/bookings/${bookingId}/respond`, {
-      method: 'POST',
-      body: { action, quotedPrice },
-    }).catch(e => rejectWithValue(storableApiV2Error(e)));
-  }
-);
-
-export const advanceBookingStatusV2Thunk = createAsyncThunk(
-  'providerInboxPageV2/advanceStatus',
-  ({ bookingId, status }, { rejectWithValue }) => {
-    return apiV2(`/api/v2/bookings/${bookingId}/status`, {
-      method: 'POST',
-      body: { status },
-    }).catch(e => rejectWithValue(storableApiV2Error(e)));
-  }
+export const setAcceptingJobsV2Thunk = createAsyncThunk(
+  'providerInboxPageV2/setAcceptingJobs',
+  (acceptingNewJobs, { rejectWithValue }) =>
+    apiV2('/api/v2/providers/me/accepting-jobs', { method: 'PATCH', body: { acceptingNewJobs } }).catch(e =>
+      rejectWithValue(storableApiV2Error(e))
+    )
 );
 
 const initialState = {
+  business: null,
+  fetchBusinessInProgress: false,
+  fetchBusinessError: null,
+
   data: [],
   fetchInProgress: false,
   fetchError: null,
   noProviderProfileMessage: null,
 
-  actionInProgressId: null, // bookingId currently being responded to / advanced, if any
-  actionError: null,
-};
-
-const upsertBooking = (state, updated) => {
-  state.data = state.data.map(b => (b._id === updated._id ? updated : b));
+  toggleInProgress: false,
+  toggleError: null,
 };
 
 const providerInboxPageV2Slice = createSlice({
@@ -56,6 +49,19 @@ const providerInboxPageV2Slice = createSlice({
   reducers: {},
   extraReducers: builder => {
     builder
+      .addCase(fetchMyBusinessV2Thunk.pending, state => {
+        state.fetchBusinessInProgress = true;
+        state.fetchBusinessError = null;
+      })
+      .addCase(fetchMyBusinessV2Thunk.fulfilled, (state, action) => {
+        state.fetchBusinessInProgress = false;
+        state.business = action.payload.business;
+      })
+      .addCase(fetchMyBusinessV2Thunk.rejected, (state, action) => {
+        state.fetchBusinessInProgress = false;
+        state.fetchBusinessError = action.payload;
+      })
+
       .addCase(fetchInboxV2Thunk.pending, state => {
         state.fetchInProgress = true;
         state.fetchError = null;
@@ -69,29 +75,18 @@ const providerInboxPageV2Slice = createSlice({
         state.fetchInProgress = false;
         state.fetchError = action.payload;
       })
-      .addCase(respondBookingV2Thunk.pending, (state, action) => {
-        state.actionInProgressId = action.meta.arg.bookingId;
-        state.actionError = null;
+
+      .addCase(setAcceptingJobsV2Thunk.pending, state => {
+        state.toggleInProgress = true;
+        state.toggleError = null;
       })
-      .addCase(respondBookingV2Thunk.fulfilled, (state, action) => {
-        state.actionInProgressId = null;
-        upsertBooking(state, action.payload.booking);
+      .addCase(setAcceptingJobsV2Thunk.fulfilled, (state, action) => {
+        state.toggleInProgress = false;
+        state.business = action.payload.business;
       })
-      .addCase(respondBookingV2Thunk.rejected, (state, action) => {
-        state.actionInProgressId = null;
-        state.actionError = action.payload;
-      })
-      .addCase(advanceBookingStatusV2Thunk.pending, (state, action) => {
-        state.actionInProgressId = action.meta.arg.bookingId;
-        state.actionError = null;
-      })
-      .addCase(advanceBookingStatusV2Thunk.fulfilled, (state, action) => {
-        state.actionInProgressId = null;
-        upsertBooking(state, action.payload.booking);
-      })
-      .addCase(advanceBookingStatusV2Thunk.rejected, (state, action) => {
-        state.actionInProgressId = null;
-        state.actionError = action.payload;
+      .addCase(setAcceptingJobsV2Thunk.rejected, (state, action) => {
+        state.toggleInProgress = false;
+        state.toggleError = action.payload;
       });
   },
 });

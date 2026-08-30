@@ -3,13 +3,16 @@
  *
  * POST /api/v2/bookings/:id/respond - a provider accepting or declining a 'requested' booking.
  * Real authorization: only the AppUser who owns the Business the booking was made against can
- * respond to it - not just any logged-in provider. Real state-machine check: only bookings
- * currently in 'requested' can be responded to (see server/utils/bookingStateMachine.js).
+ * respond to it. Real state-machine check via bookingStateMachine.js. Also updates the
+ * Business's real response-rate/response-time counters (spec section 27) and notifies the
+ * customer (spec section 40) - none of this is display-only, it's the actual data those
+ * dashboard numbers are computed from.
  */
 const Booking = require('../../../models/Booking');
 const Business = require('../../../models/Business');
 const { isConnected, connect } = require('../../../db/mongoose');
 const { canTransition } = require('../../../utils/bookingStateMachine');
+const { notify } = require('../../../utils/notify');
 
 module.exports = async (req, res) => {
   const { id } = req.params;
@@ -58,7 +61,9 @@ module.exports = async (req, res) => {
       return;
     }
 
+    const wasAlreadyResponded = !!booking.respondedAt;
     booking.status = toStatus;
+    booking.respondedAt = new Date();
     if (action === 'accept' && quotedPrice !== undefined) {
       const price = Number(quotedPrice);
       if (Number.isFinite(price) && price >= 0) {
@@ -66,6 +71,23 @@ module.exports = async (req, res) => {
       }
     }
     await booking.save();
+
+    // Real response-time/response-rate tracking - only the first response counts, so a
+    // provider can't inflate their rate by re-responding.
+    if (!wasAlreadyResponded) {
+      const responseTimeMs = booking.respondedAt.getTime() - booking.createdAt.getTime();
+      business.requestsRespondedCount += 1;
+      business.totalResponseTimeMs += Math.max(0, responseTimeMs);
+      await business.save();
+    }
+
+    await notify({
+      recipient: booking.customer,
+      type: action === 'accept' ? 'request_accepted' : 'request_declined',
+      booking: booking._id,
+      title: action === 'accept' ? `${business.name} accepted your request` : `${business.name} declined your request`,
+      body: action === 'accept' && booking.quotedPrice != null ? `Quoted price: $${booking.quotedPrice}` : undefined,
+    });
 
     res.status(200).json({ booking });
   } catch (err) {

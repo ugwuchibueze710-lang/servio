@@ -6,6 +6,8 @@ module.exports = {
   Category: require('./Category'),
   Business: require('./Business'),
   Booking: require('./Booking'),
+  Message: require('./Message'),
+  Notification: require('./Notification'),
   Review: require('./Review'),
   Driver: require('./Driver'),
   Vehicle: require('./Vehicle'),

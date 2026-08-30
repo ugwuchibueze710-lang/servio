@@ -10,6 +10,7 @@
  */
 const Booking = require('../../../models/Booking');
 const RideRequest = require('../../../models/RideRequest');
+const Business = require('../../../models/Business');
 const { getStripeClient } = require('../../../utils/stripeClient');
 const { isConnected, connect } = require('../../../db/mongoose');
 
@@ -34,9 +35,10 @@ module.exports = async (req, res) => {
     return;
   }
 
-  if (event.type !== 'payment_intent.succeeded' && event.type !== 'payment_intent.payment_failed') {
-    // Real Stripe accounts send many event types; only these two are relevant here. Acknowledge
-    // and ignore the rest rather than erroring on something we don't need to act on.
+  const RELEVANT_EVENTS = ['payment_intent.succeeded', 'payment_intent.payment_failed', 'account.updated'];
+  if (!RELEVANT_EVENTS.includes(event.type)) {
+    // Real Stripe accounts send many event types; only these are relevant here. Acknowledge and
+    // ignore the rest rather than erroring on something we don't need to act on.
     res.status(200).json({ received: true, ignored: event.type });
     return;
   }
@@ -51,10 +53,26 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const paymentIntentId = event.data.object.id;
-  const newStatus = event.type === 'payment_intent.succeeded' ? 'paid' : 'failed';
-
   try {
+    if (event.type === 'account.updated') {
+      // The real, async source of truth for Connect onboarding completion (spec section 32) -
+      // connectStatus.js also checks synchronously right after the onboarding redirect, but this
+      // is what keeps the flag correct even if the provider never comes back to that page.
+      const account = event.data.object;
+      const business = await Business.findOne({ stripeConnectAccountId: account.id });
+      if (business) {
+        business.stripeConnectPayoutsEnabled = !!account.payouts_enabled;
+        await business.save();
+        res.status(200).json({ received: true, updated: 'business_connect_status', id: String(business._id) });
+        return;
+      }
+      res.status(200).json({ received: true, updated: null });
+      return;
+    }
+
+    const paymentIntentId = event.data.object.id;
+    const newStatus = event.type === 'payment_intent.succeeded' ? 'paid' : 'failed';
+
     const booking = await Booking.findOne({ stripePaymentIntentId: paymentIntentId });
     if (booking) {
       booking.paymentStatus = newStatus;

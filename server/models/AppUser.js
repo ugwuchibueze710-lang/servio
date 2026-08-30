@@ -1,14 +1,32 @@
 /**
- * AppUser - the new, custom-backend account record.
+ * AppUser - the custom-backend account record. One account, multiple capabilities
+ * (customer/provider/driver) - never a separate signup flow per role (spec section 1/2/4).
  *
- * Deliberately named AppUser (not "User") and kept in its own collection so it can never be
- * confused with a Sharetribe user record while both systems exist side by side during the
- * migration. One account can hold multiple capabilities at once (customer/provider/driver) per
- * spec section 18 - there is no separate signup flow per role.
+ * Extended with:
+ *  - `savedProviders`: real favorites list (spec section 38).
+ *  - `searchHistory`: real per-user query log powering search-box suggestions (Groq smart
+ *    search, spec addendum) - capped and most-recent-first.
+ *  - `locationPref`: the customer's locked/unlocked location + radius, persisted so it
+ *    survives a reload instead of living only in frontend state.
  */
 const mongoose = require('mongoose');
 
 const ROLE_VALUES = ['customer', 'provider', 'driver'];
+
+const searchHistoryEntrySchema = new mongoose.Schema(
+  { query: { type: String, required: true, trim: true, maxlength: 200 }, searchedAt: { type: Date, default: Date.now } },
+  { _id: false }
+);
+
+const locationPrefSchema = new mongoose.Schema(
+  {
+    label: { type: String, trim: true, maxlength: 200 },
+    coordinates: { type: [Number], default: undefined }, // [lng, lat]
+    radiusMiles: { type: Number, default: 15, min: 1, max: 200 },
+    locked: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
 
 const appUserSchema = new mongoose.Schema(
   {
@@ -22,15 +40,19 @@ const appUserSchema = new mongoose.Schema(
       type: [{ type: String, enum: ROLE_VALUES }],
       default: ['customer'],
     },
+    // Which mode the account is currently operating in (spec section 1: only one at a time).
+    activeMode: { type: String, enum: ['customer', 'provider'], default: 'customer' },
+
+    savedProviders: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Business' }],
+      default: [],
+    },
+    searchHistory: { type: [searchHistoryEntrySchema], default: [] },
+    locationPref: { type: locationPrefSchema, default: () => ({}) },
+
     notificationsEnabled: { type: Boolean, default: true },
     active: { type: Boolean, default: true },
-    // Set only by server/api/v2/auth/bridge.js when this account is linked to a Sharetribe
-    // account (see MIGRATION_PLAN.md, Ride migration prerequisite). Optional/sparse: accounts
-    // created via the plain Phase-2 signup never get one unless/until they later bridge.
     sharetribeUserId: { type: String, index: true, sparse: true },
-    // Admin access (Phase 8, see MIGRATION_PLAN.md). Deliberately no API endpoint can ever set
-    // this to true - see server/middleware/requireAdmin.js and server/scripts/makeAdmin.js -
-    // only direct database access can grant it, so there's no self-escalation path.
     isAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }

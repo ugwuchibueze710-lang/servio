@@ -56,11 +56,31 @@ const render = (store, shouldHydrate) => {
   info
     .then(() => {
       // Ensure that Loadable Components is ready
-      // and fetch hosted assets in parallel before initializing the ClientApp
+      // and fetch hosted assets in parallel before initializing the ClientApp.
+      //
+      // IMPORTANT: this app is being migrated off Sharetribe (see server/index.js and the /v2
+      // Mongo/Stripe/Groq backend). Both of these calls still go through the Sharetribe SDK, and
+      // originally a rejection from EITHER of them (missing/invalid REACT_APP_SHARETRIBE_SDK_CLIENT_ID,
+      // the Sharetribe API being unreachable, or hosted content simply not existing for this
+      // client id) would reject this whole Promise.all and fall straight into the top-level
+      // .catch() below - which only logs the error and never calls ReactDOMClient render/hydrate.
+      // That meant a missing/broken Sharetribe credential produced a permanent blank page for
+      // EVERY visitor, including pure /v2 users who never touch Sharetribe at all. Both fetches
+      // already have safe fallbacks the rest of the app understands (hostedConfig defaults to
+      // {} and is merged with the bundled default translations in src/app.js; fetchCurrentUser
+      // resolving to null just means "not signed in to the legacy Sharetribe auth", which is the
+      // correct/expected state for a /v2-only account) - so failures here are caught locally and
+      // degrade honestly instead of being allowed to block the entire client-side render.
       return Promise.all([
         loadableReady(),
-        store.dispatch(fetchAppAssets(defaultConfig.appCdnAssets, cdnAssetsVersion)),
-        store.dispatch(fetchCurrentUser()),
+        store.dispatch(fetchAppAssets(defaultConfig.appCdnAssets, cdnAssetsVersion)).catch(e => {
+          log.error(e, 'hosted-asset-fetch-failed-continuing-without-sharetribe');
+          return {};
+        }),
+        store.dispatch(fetchCurrentUser()).catch(e => {
+          log.error(e, 'fetch-current-user-failed-continuing-without-sharetribe');
+          return null;
+        }),
       ]);
     })
     .then(([_, fetchedAppAssets, cu]) => {

@@ -32,6 +32,18 @@ export const upsertProviderV2Thunk = createAsyncThunk(
   }
 );
 
+export const connectOnboardV2Thunk = createAsyncThunk(
+  'providerProfilePageV2/connectOnboard',
+  (_, { rejectWithValue }) =>
+    apiV2('/api/v2/payments/connect/onboard', { method: 'POST' }).catch(e => rejectWithValue(storableApiV2Error(e)))
+);
+
+export const connectStatusV2Thunk = createAsyncThunk(
+  'providerProfilePageV2/connectStatus',
+  (_, { rejectWithValue }) =>
+    apiV2('/api/v2/payments/connect/status').catch(e => rejectWithValue(storableApiV2Error(e)))
+);
+
 const initialState = {
   categories: [],
   fetchCategoriesInProgress: false,
@@ -42,6 +54,11 @@ const initialState = {
   saveInProgress: false,
   saveError: null,
   savedJustNow: false,
+
+  connectStatus: null,
+  connectStatusInProgress: false,
+  connectOnboardInProgress: false,
+  connectOnboardError: null,
 };
 
 const providerProfilePageV2Slice = createSlice({
@@ -87,6 +104,27 @@ const providerProfilePageV2Slice = createSlice({
       .addCase(upsertProviderV2Thunk.rejected, (state, action) => {
         state.saveInProgress = false;
         state.saveError = action.payload;
+      })
+      .addCase(connectOnboardV2Thunk.pending, state => {
+        state.connectOnboardInProgress = true;
+        state.connectOnboardError = null;
+      })
+      .addCase(connectOnboardV2Thunk.fulfilled, state => {
+        state.connectOnboardInProgress = false;
+      })
+      .addCase(connectOnboardV2Thunk.rejected, (state, action) => {
+        state.connectOnboardInProgress = false;
+        state.connectOnboardError = action.payload;
+      })
+      .addCase(connectStatusV2Thunk.pending, state => {
+        state.connectStatusInProgress = true;
+      })
+      .addCase(connectStatusV2Thunk.fulfilled, (state, action) => {
+        state.connectStatusInProgress = false;
+        state.connectStatus = action.payload;
+      })
+      .addCase(connectStatusV2Thunk.rejected, state => {
+        state.connectStatusInProgress = false;
       });
   },
 });

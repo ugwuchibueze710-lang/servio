@@ -2,45 +2,68 @@
  * src/containers/BookingRequestPageV2/BookingRequestPageV2.js
  *
  * Real request form for a specific provider, reached at /book-v2/:businessId (e.g. from a
- * "Request booking" link on ProviderSearchPageV2's results). See the .duck.js header for why
- * GET /api/v2/providers/:id exists now - this page needs to work on a direct visit/refresh, not
- * only when arriving from search results with data already in memory.
+ * "Request booking" link on ProviderSearchPageV2 or ProviderPublicProfilePageV2). Spec section
+ * 17's "detailed customer service requests": description, real photos (uploaded to GridFS, not
+ * just staged in memory), preferred date, budget, and - when the provider has structured
+ * services/pricing set up - a specific service picker showing the real quoted price upfront.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
-import { userLocation } from '../../util/maps';
+import LocationControl from '../../components/LocationControl/LocationControl';
+import PhotoUploader from '../../components/PhotoUploader/PhotoUploader';
+import { hasAppUserToken } from '../../util/apiV2';
 import { fetchBusinessV2Thunk, createBookingV2Thunk } from './BookingRequestPageV2.duck';
 
 import css from './BookingRequestPageV2.module.css';
 
+const formatPrice = service => {
+  switch (service.pricingType) {
+    case 'fixed':
+      return `$${service.fixedPrice}`;
+    case 'starting_at':
+      return `Starting at $${service.fixedPrice}`;
+    case 'range':
+      return `$${service.priceMin}–$${service.priceMax}`;
+    case 'hourly':
+      return `$${service.hourlyRate}/hr`;
+    case 'per_unit':
+      return `$${service.fixedPrice}${service.unitLabel ? ` / ${service.unitLabel}` : ''}`;
+    case 'request_quote':
+    default:
+      return 'Request a quote';
+  }
+};
+
 const emptyForm = {
   categorySlug: '',
+  serviceId: '',
   description: '',
-  locationLabel: '',
-  lat: null,
-  lng: null,
   requestedDate: '',
   requestedTimeNote: '',
   budgetNote: '',
   additionalNotes: '',
 };
 
-// Receives `params` the same way ServiceCategoryPage.js / ProviderSearchPageV2.js do - see
-// src/routing/Routes.js's `params={match.params}`.
 const BookingRequestPageV2 = props => {
   const { businessId } = props.params || {};
   const dispatch = useDispatch();
   const history = useHistory();
   const page = useSelector(state => state.BookingRequestPageV2);
   const [form, setForm] = useState(emptyForm);
+  const [location, setLocation] = useState({});
+  const [photos, setPhotos] = useState([]);
 
   useEffect(() => {
+    if (!hasAppUserToken()) {
+      history.push(`/auth-v2?returnTo=${encodeURIComponent(window.location.pathname)}`);
+      return;
+    }
     if (businessId) {
       dispatch(fetchBusinessV2Thunk(businessId));
     }
-  }, [dispatch, businessId]);
+  }, [dispatch, businessId, history]);
 
   useEffect(() => {
     if (page.business && !form.categorySlug && page.business.categories?.length) {
@@ -51,22 +74,23 @@ const BookingRequestPageV2 = props => {
 
   useEffect(() => {
     if (page.createdBooking) {
-      history.push('/my-bookings-v2');
+      history.push(`/booking-v2/${page.createdBooking._id}`);
     }
   }, [page.createdBooking, history]);
 
   const handleField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  const handleUseCurrentLocation = () => {
-    userLocation()
-      .then(latlng => {
-        handleField('lat', latlng.lat);
-        handleField('lng', latlng.lng);
-      })
-      .catch(() => {
-        // Real failure mode (denied/unavailable geolocation) - the request can still be sent
-        // without a precise location; locationLabel (typed by hand) still goes through.
-      });
+  const servicesForCategory = useMemo(() => {
+    if (!page.business?.services) return [];
+    const category = (page.business.categories || []).find(c => c.slug === form.categorySlug);
+    if (!category) return [];
+    return page.business.services.filter(
+      s => s.active !== false && String(s.category) === String(category._id)
+    );
+  }, [page.business, form.categorySlug]);
+
+  const handleCategoryChange = slug => {
+    setForm(prev => ({ ...prev, categorySlug: slug, serviceId: '' }));
   };
 
   const handleSubmit = e => {
@@ -74,16 +98,18 @@ const BookingRequestPageV2 = props => {
     const body = {
       businessId,
       categorySlug: form.categorySlug,
+      serviceId: form.serviceId || undefined,
       description: form.description,
-      locationLabel: form.locationLabel || undefined,
+      locationLabel: location.label || undefined,
       requestedDate: form.requestedDate || undefined,
       requestedTimeNote: form.requestedTimeNote || undefined,
       budgetNote: form.budgetNote || undefined,
       additionalNotes: form.additionalNotes || undefined,
+      photos: photos.map(p => ({ url: p.url })),
     };
-    if (form.lat != null && form.lng != null) {
-      body.lat = form.lat;
-      body.lng = form.lng;
+    if (location.lat != null && location.lng != null) {
+      body.lat = location.lat;
+      body.lng = location.lng;
     }
     dispatch(createBookingV2Thunk(body));
   };
@@ -123,7 +149,7 @@ const BookingRequestPageV2 = props => {
           <select
             className={css.input}
             value={form.categorySlug}
-            onChange={e => handleField('categorySlug', e.target.value)}
+            onChange={e => handleCategoryChange(e.target.value)}
             required
           >
             {(business.categories || []).map(cat => (
@@ -133,6 +159,24 @@ const BookingRequestPageV2 = props => {
             ))}
           </select>
         </label>
+
+        {servicesForCategory.length > 0 && (
+          <label className={css.label}>
+            Specific service (optional - shows real pricing)
+            <select
+              className={css.input}
+              value={form.serviceId}
+              onChange={e => handleField('serviceId', e.target.value)}
+            >
+              <option value="">Not sure / general request</option>
+              {servicesForCategory.map(s => (
+                <option key={s._id} value={s._id}>
+                  {s.name} - {formatPrice(s)}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
 
         <label className={css.label}>
           Describe what you need (10+ characters)
@@ -145,25 +189,14 @@ const BookingRequestPageV2 = props => {
           />
         </label>
 
-        <label className={css.label}>
-          Location (e.g. "123 Main St, Boston")
-          <input
-            className={css.input}
-            type="text"
-            value={form.locationLabel}
-            onChange={e => handleField('locationLabel', e.target.value)}
-          />
-        </label>
+        <div className={css.label}>
+          Photos (optional - helps the provider quote accurately)
+          <PhotoUploader purpose="project_photo" value={photos} onChange={setPhotos} />
+        </div>
 
-        <div className={css.locationRow}>
-          <button type="button" className={css.secondaryButton} onClick={handleUseCurrentLocation}>
-            Use my current location
-          </button>
-          {form.lat != null && (
-            <span className={css.locationLabel}>
-              {form.lat.toFixed(4)}, {form.lng.toFixed(4)}
-            </span>
-          )}
+        <div className={css.label}>
+          Where is this?
+          <LocationControl value={location} onChange={setLocation} lockable={false} showRadius={false} label="" />
         </div>
 
         <label className={css.label}>

@@ -112,6 +112,19 @@ const MaintenanceModeError = props => {
   );
 };
 
+// This app is being migrated off Sharetribe onto its own real /v2 Mongo+Stripe+Groq backend
+// (see server/index.js and server/apiRouter.js). appConfig.hasMandatoryConfigurations (above,
+// via src/util/configHelpers.js) only ever reflects Sharetribe Console hosted config - branding,
+// listingTypes, listingFields, transactionSize - none of which the /v2 pages read or need. Without
+// this check, a marketplace with no (or an invalid) Sharetribe client id would show
+// <MaintenanceMode/> for every single route, including the fully independent /v2 pages, which is
+// not an honest reflection of their actual state (they work fine). Every real /v2 route path
+// created for this rebuild uses a "-v2" path segment by convention (see the "-v2" routes in
+// src/routing/routeConfiguration.js), so that's used here as the real, checkable signal for
+// "this route doesn't depend on Sharetribe hosted config" rather than hard-coding the path list
+// in two places.
+const isMongoV2Route = pathname => typeof pathname === 'string' && /(^|\/)[^/]*-v2(\/|$)/.test(pathname);
+
 // This displays a warning if environment variable key contains a string "SECRET"
 const EnvironmentVariableWarning = props => {
   const suspiciousEnvKey = props.suspiciousEnvKey;
@@ -193,8 +206,10 @@ export const ClientApp = props => {
     }
   }
 
-  // Show MaintenanceMode if the mandatory configurations are not available
-  if (!appConfig.hasMandatoryConfigurations) {
+  // Show MaintenanceMode if the mandatory configurations are not available - unless this is one
+  // of the real /v2 routes, which don't depend on Sharetribe hosted config at all (see
+  // isMongoV2Route's comment above).
+  if (!appConfig.hasMandatoryConfigurations && !isMongoV2Route(window?.location?.pathname)) {
     return (
       <MaintenanceModeError
         locale={appConfig.localization.locale}
@@ -249,8 +264,12 @@ export const ServerApp = props => {
   const appConfig = mergeConfig(hostedConfig, defaultConfig);
   HelmetProvider.canUseDOM = false;
 
-  // Show MaintenanceMode if the mandatory configurations are not available
-  if (!appConfig.hasMandatoryConfigurations) {
+  const initialPathname = new URL(url, 'http://example.com')?.pathname;
+
+  // Show MaintenanceMode if the mandatory configurations are not available - unless this is one
+  // of the real /v2 routes, which don't depend on Sharetribe hosted config at all (see
+  // isMongoV2Route's comment above).
+  if (!appConfig.hasMandatoryConfigurations && !isMongoV2Route(initialPathname)) {
     return (
       <MaintenanceModeError
         locale={appConfig.localization.locale}
@@ -259,7 +278,6 @@ export const ServerApp = props => {
       />
     );
   }
-  const initialPathname = new URL(url, 'http://example.com')?.pathname;
 
   return (
     <Configurations appConfig={appConfig}>

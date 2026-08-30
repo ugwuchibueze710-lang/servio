@@ -92,3 +92,45 @@
   background: #fff;
   cursor: pointer;
 }
+
+.serviceEditorRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--colorGrey50);
+}
+
+.serviceEditorRow .input {
+  flex: 1;
+  min-width: 120px;
+  margin: 0;
+}
+
+.removeServiceButton {
+  padding: 8px 12px;
+  border: 1px solid var(--colorFail);
+  border-radius: var(--borderRadiusMedium);
+  background: var(--colorWhite);
+  color: var(--colorFail);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.stripeSection {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--colorGrey100);
+}
+
+.sectionTitle {
+  font-size: 18px;
+  margin: 0 0 10px;
+}
+
+.detail {
+  color: var(--colorGrey600);
+  font-size: 14px;
+  margin: 0 0 10px;
+}

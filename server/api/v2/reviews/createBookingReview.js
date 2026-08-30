@@ -45,10 +45,10 @@ module.exports = async (req, res) => {
       res.status(403).json({ error: 'not_authorized', message: 'This is not your booking.' });
       return;
     }
-    if (booking.status !== 'completed') {
+    if (!['confirmed', 'paid_out'].includes(booking.status)) {
       res.status(409).json({
         error: 'not_completed',
-        message: 'You can only review a booking after it has been completed.',
+        message: 'You can only review a booking after you have confirmed the job was completed.',
       });
       return;
     }

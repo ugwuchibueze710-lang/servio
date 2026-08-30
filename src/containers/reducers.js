@@ -23,11 +23,14 @@ import DriverRidePage from './DriverRidePage/DriverRidePage.duck';
 import RidePageV2 from './RidePage/RidePageV2.duck';
 import DriverRidePageV2 from './DriverRidePage/DriverRidePageV2.duck';
 import ProviderProfilePageV2 from './ProviderProfilePageV2/ProviderProfilePageV2.duck';
+import ProviderPublicProfilePageV2 from './ProviderPublicProfilePageV2/ProviderPublicProfilePageV2.duck';
+import ProjectPassportPageV2 from './ProjectPassportPageV2/ProjectPassportPageV2.duck';
 import ProviderSearchPageV2 from './ProviderSearchPageV2/ProviderSearchPageV2.duck';
 import BookingRequestPageV2 from './BookingRequestPageV2/BookingRequestPageV2.duck';
 import MyBookingsPageV2 from './MyBookingsPageV2/MyBookingsPageV2.duck';
 import ProviderInboxPageV2 from './ProviderInboxPageV2/ProviderInboxPageV2.duck';
-import TestSignInPageV2 from './TestSignInPageV2/TestSignInPageV2.duck';
+import AuthenticationPageV2 from './AuthenticationPageV2/AuthenticationPageV2.duck';
+import NotificationsPageV2 from './NotificationsPageV2/NotificationsPageV2.duck';
 import SearchPage from './SearchPage/SearchPage.duck';
 import StripePayoutPage from './StripePayoutPage/StripePayoutPage.duck';
 import TransactionPage from './TransactionPage/TransactionPage.duck';
@@ -53,11 +56,14 @@ export {
   RidePageV2,
   DriverRidePageV2,
   ProviderProfilePageV2,
+  ProviderPublicProfilePageV2,
+  ProjectPassportPageV2,
   ProviderSearchPageV2,
   BookingRequestPageV2,
   MyBookingsPageV2,
   ProviderInboxPageV2,
-  TestSignInPageV2,
+  AuthenticationPageV2,
+  NotificationsPageV2,
   SearchPage,
   StripePayoutPage,
   TransactionPage,
