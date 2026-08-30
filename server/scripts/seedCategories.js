@@ -47,7 +47,7 @@ const CATEGORIES = [
   slug: c.id,
   name: c.name,
   blurb: c.blurb,
-  imageUrl: `/static/categoryIcons/${c.id}.png`,
+  imageUrl: `/static/categoryIcons/${c.id}.jpg`,
   isRideCategory: !!c.isRideCategory,
   active: true,
   sortOrder: index,

@@ -7,31 +7,36 @@ import { createResourceLocatorString } from '../../../util/routes';
 import { isOriginInUse } from '../../../util/search';
 import { useIntl } from '../../../util/reactIntl';
 
-import { LocationAutocompleteInput } from '../../../components';
+import {
+  IconCheckmark,
+  IconLocation,
+  IconSearch,
+  LocationAutocompleteInput,
+} from '../../../components';
 
 import serviceCategories from '../../../config/configServiceCategories';
 
-import iconRide from '../../../assets/categoryIcons/ride.png';
-import iconHomeImprovement from '../../../assets/categoryIcons/home-improvement.png';
-import iconCleaning from '../../../assets/categoryIcons/cleaning.png';
-import iconLandscaping from '../../../assets/categoryIcons/landscaping.png';
-import iconPlumbing from '../../../assets/categoryIcons/plumbing.png';
-import iconElectrical from '../../../assets/categoryIcons/electrical.png';
-import iconHvac from '../../../assets/categoryIcons/hvac.png';
-import iconMoving from '../../../assets/categoryIcons/moving.png';
-import iconAutoServices from '../../../assets/categoryIcons/auto-services.png';
-import iconPhotography from '../../../assets/categoryIcons/photography.png';
-import iconEvents from '../../../assets/categoryIcons/events.png';
-import iconBeauty from '../../../assets/categoryIcons/beauty.png';
-import iconPetServices from '../../../assets/categoryIcons/pet-services.png';
-import iconTechnology from '../../../assets/categoryIcons/technology.png';
-import iconTutoring from '../../../assets/categoryIcons/tutoring.png';
-import iconPersonalServices from '../../../assets/categoryIcons/personal-services.png';
-import iconBusinessServices from '../../../assets/categoryIcons/business-services.png';
-import iconHandyman from '../../../assets/categoryIcons/handyman.png';
-import iconLawnCare from '../../../assets/categoryIcons/lawn-care.png';
-import iconPressureWashing from '../../../assets/categoryIcons/pressure-washing.png';
-import iconPainting from '../../../assets/categoryIcons/painting.png';
+import iconRide from '../../../assets/categoryIcons/ride.jpg';
+import iconHomeImprovement from '../../../assets/categoryIcons/home-improvement.jpg';
+import iconCleaning from '../../../assets/categoryIcons/cleaning.jpg';
+import iconLandscaping from '../../../assets/categoryIcons/landscaping.jpg';
+import iconPlumbing from '../../../assets/categoryIcons/plumbing.jpg';
+import iconElectrical from '../../../assets/categoryIcons/electrical.jpg';
+import iconHvac from '../../../assets/categoryIcons/hvac.jpg';
+import iconMoving from '../../../assets/categoryIcons/moving.jpg';
+import iconAutoServices from '../../../assets/categoryIcons/auto-services.jpg';
+import iconPhotography from '../../../assets/categoryIcons/photography.jpg';
+import iconEvents from '../../../assets/categoryIcons/events.jpg';
+import iconBeauty from '../../../assets/categoryIcons/beauty.jpg';
+import iconPetServices from '../../../assets/categoryIcons/pet-services.jpg';
+import iconTechnology from '../../../assets/categoryIcons/technology.jpg';
+import iconTutoring from '../../../assets/categoryIcons/tutoring.jpg';
+import iconPersonalServices from '../../../assets/categoryIcons/personal-services.jpg';
+import iconBusinessServices from '../../../assets/categoryIcons/business-services.jpg';
+import iconHandyman from '../../../assets/categoryIcons/handyman.jpg';
+import iconLawnCare from '../../../assets/categoryIcons/lawn-care.jpg';
+import iconPressureWashing from '../../../assets/categoryIcons/pressure-washing.jpg';
+import iconPainting from '../../../assets/categoryIcons/painting.jpg';
 
 import css from './CategoryHero.module.css';
 
@@ -86,6 +91,11 @@ const saveStoredLocation = value => {
   }
 };
 
+// Small pin icon shown inside the location input itself (in place of the default search-glass
+// icon) so the box reads as "set a location" rather than "search". Rendered with no props by
+// LocationAutocompleteInput, so it just needs to exist as its own component.
+const LocationPinIcon = () => <IconLocation className={css.locationInputIcon} />;
+
 /**
  * Categories are fetched from the new database-backed endpoint (server/api/v2/categories.js -
  * see MIGRATION_PLAN.md Phase 1) so the category system is admin-editable data, not a hardcoded
@@ -109,10 +119,12 @@ const normalizeApiCategory = apiCategory => ({
  * and a text box to search/filter the category tiles themselves.
  *
  * The location bar does NOT search by itself - picking a place just remembers it (in state and
- * localStorage). Clicking a category tile is what actually searches, and it carries the
- * currently remembered location along with it, so "pick a location, then tap a category" shows
- * listings in that category filtered to that area. If nobody has listed that category in that
- * area yet, the results page's own empty state ("No listings found") covers that automatically.
+ * localStorage) and visually "locks in" as a pill with the chosen address, a checkmark, and a
+ * Change/clear control, so it's obvious the location has been set. Clicking a category tile is
+ * what actually searches, and it carries the currently remembered location along with it (as
+ * real map bounds - see goToCategory below), so "pick a location, then tap a category" only
+ * shows listings from that area. If nobody has listed that category in that area yet, the
+ * results page's own empty state ("No listings found") covers that automatically.
  *
  * Clicking "Ride" jumps straight into the live ride-matching flow (RidePage) instead of a
  * generic filtered search, since Ride isn't a browsable listing category - it's a real-time
@@ -128,6 +140,7 @@ const CategoryHero = () => {
 
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState({ search: '', selectedPlace: null });
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [categories, setCategories] = useState(serviceCategories);
 
   // Load any previously chosen location once, on mount.
@@ -162,9 +175,24 @@ const CategoryHero = () => {
   const handleLocationChange = value => {
     setLocation(value);
     if (value?.selectedPlace) {
+      // A real place was picked from the predictions dropdown (not just typing) - lock it in.
       saveStoredLocation(value);
+      setIsEditingLocation(false);
     }
   };
+
+  const handleChangeLocationClick = () => {
+    setIsEditingLocation(true);
+  };
+
+  const handleClearLocation = () => {
+    setLocation({ search: '', selectedPlace: null });
+    saveStoredLocation(null);
+    setIsEditingLocation(false);
+  };
+
+  // Locked = a real place is selected and the user isn't actively editing it right now.
+  const isLocationLocked = !!location?.selectedPlace && !isEditingLocation;
 
   const normalizedQuery = query.trim().toLowerCase();
   const visibleCategories = normalizedQuery
@@ -206,29 +234,69 @@ const CategoryHero = () => {
   return (
     <div className={css.root}>
       <div className={css.locationBar}>
-        <LocationAutocompleteInput
-          className={css.locationInput}
-          placeholder={intl.formatMessage({ id: 'PageBuilder.SearchCTA.locationPlaceholder' })}
-          closeOnBlur={true}
-          input={{
-            name: 'category-hero-location',
-            value: location,
-            onChange: handleLocationChange,
-            onBlur: () => {},
-            onFocus: () => {},
-          }}
-          meta={{}}
-        />
+        {isLocationLocked ? (
+          <div className={css.locationLocked}>
+            <IconCheckmark size="small" className={css.locationLockedIcon} />
+            <span className={css.locationLockedText} title={location.search}>
+              {location.search}
+            </span>
+            <button
+              type="button"
+              className={css.locationChangeButton}
+              onClick={handleChangeLocationClick}
+            >
+              Change
+            </button>
+            <button
+              type="button"
+              className={css.locationClearButton}
+              onClick={handleClearLocation}
+              aria-label="Clear location"
+              title="Clear location"
+            >
+              &times;
+            </button>
+          </div>
+        ) : (
+          <LocationAutocompleteInput
+            className={css.locationInput}
+            iconClassName={css.locationInputIconBox}
+            inputClassName={css.locationInputField}
+            predictionsClassName={css.locationPredictions}
+            CustomIcon={LocationPinIcon}
+            autoFocus={isEditingLocation}
+            placeholder={intl.formatMessage({ id: 'PageBuilder.SearchCTA.locationPlaceholder' })}
+            closeOnBlur={true}
+            input={{
+              name: 'category-hero-location',
+              value: location,
+              onChange: handleLocationChange,
+              onBlur: () => {},
+              onFocus: () => {},
+            }}
+            meta={{}}
+          />
+        )}
       </div>
 
       <h1 className={css.title}>What service do you need?</h1>
       <p className={css.subtitle}>
-        Every category below is live and searchable. Set your location above, then tap a category
-        to see who&apos;s available near you - if nobody has signed up yet in your area,
-        you&apos;ll see that too.
+        {isLocationLocked ? (
+          <>
+            Showing categories near <strong>{location.search}</strong> - tap one to see
+            who&apos;s available.
+          </>
+        ) : (
+          <>
+            Every category below is live and searchable. Set your location above, then tap a
+            category to see who&apos;s available near you - if nobody has signed up yet in your
+            area, you&apos;ll see that too.
+          </>
+        )}
       </p>
 
       <div className={css.categorySearch}>
+        <IconSearch className={css.categorySearchIcon} />
         <input
           type="text"
           className={css.categorySearchInput}

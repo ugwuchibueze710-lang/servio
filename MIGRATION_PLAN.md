@@ -405,11 +405,93 @@ once against your real MongoDB after setting `MONGODB_URI` and `JWT_SECRET` - e.
 "You","lastName":"Test"}' -H 'Content-Type: application/json'` - to confirm the real database
 path end-to-end too.
 
-## Known gap: category images are not real photographs yet
+## Category images: now real photographs (previously a known gap)
 
-Spec section 35 calls for realistic photographic imagery per category. The current `imageUrl`
-values point at the flat-icon PNGs generated earlier this project (now served from
-`public/static/categoryIcons/`), not real photography - I don't have a stock-photo or image
-licensing source available. Swapping them for real photos later is just a matter of replacing the
-files at those same paths (or updating `imageUrl` in the database) - no application code changes
-needed, by design.
+Spec section 35 calls for realistic photographic imagery per category. The flat-icon PNGs
+generated earlier in this project (a broom/wrench/car-style icon with the category name baked
+into the image itself) have been replaced with real photographs for all 21 categories, sourced
+from Wikimedia Commons under free licenses (CC0, CC BY, CC BY-SA, and US-government public
+domain - all compatible with commercial use with attribution).
+
+This incidentally fixes a real visual bug too: because `CategoryHero.module.css` already renders
+a category name as a separate text overlay on top of each tile image, the old icons - which also
+had the name baked into the bottom of the icon - caused every category name to display twice on
+the homepage (visible on the live site as "Ride Ride", "Home Improvement Home Improvement", etc).
+The new photos have no text baked in, so each name now shows once, as designed.
+
+**What changed:**
+- All 21 files in `src/assets/categoryIcons/` and `public/static/categoryIcons/` were replaced,
+  and switched from `.png` to `.jpg` (photos compress far better as JPEG than PNG - roughly
+  50-260KB each here, vs. an estimated 300-700KB apiece if kept as PNG).
+- Each new photo was center-cropped to a 4:3 aspect ratio (matching `CategoryHero.module.css`'s
+  `.tile { aspect-ratio: 4/3 }` / `.tileImage { object-fit: cover }`) and resized to a max width of
+  900px, so tiles fill cleanly with no letterboxing.
+- `src/containers/LandingPage/CategoryHero/CategoryHero.js` - the 21 `import icon... from
+  '.../categoryIcons/<id>.png'` lines were updated to `.jpg`. No other code changed; the
+  `ICONS_BY_ID` map, the live `/api/v2/categories` fetch/fallback logic, and the tile JSX are
+  untouched.
+- `server/scripts/seedCategories.js` line 50 - the seeded `imageUrl` template literal was updated
+  from `` `/static/categoryIcons/${c.id}.png` `` to `.jpg`, so once `MONGODB_URI` is configured and
+  this script is (re-)run, the database-driven category list will point at the new photos too.
+
+**Sourcing/verification process:** each candidate photo was found via the Wikimedia Commons API,
+then actually opened and visually checked before being used - several plausible-looking search
+results turned out to be wrong on inspection (a woodblock print, a vector cartoon, a tiny-house
+carpentry-class photo mislabeled as plumbing, a military-desk photo with an unrelated promotional
+poster) and were rejected in favor of a better match.
+
+**Attribution (required by the CC BY / CC BY-SA licenses below; CC0 and public-domain entries
+don't legally require it but are listed for completeness):**
+
+| Category | Source file | License | Author |
+|---|---|---|---|
+| Auto Services | [Car mechanic worker repairing suspension with drill in garage](https://commons.wikimedia.org/wiki/File:Car_mechanic_worker_repairing_suspension_with_drill_in_garage.jpg) | CC BY 2.0 | Shixart1985 |
+| Beauty | [Barber shop from Iran](https://commons.wikimedia.org/wiki/File:Barber_shop_from_Iran.jpg) | CC BY-SA 4.0 | Mostafameraji |
+| Business Services | [A busy day in the office 02](https://commons.wikimedia.org/wiki/File:A_busy_day_in_the_office_02.jpg) | CC BY-SA 4.0 | Petbluzz |
+| Cleaning | [20170104-RD-LSC-0953](https://commons.wikimedia.org/wiki/File:20170104-RD-LSC-0953_(52475849574).jpg) | Public domain | U.S. Department of Agriculture |
+| Electrical | [Electrician installing socket](https://commons.wikimedia.org/wiki/File:Electrician_installing_socket.jpg) | CC BY-SA 4.0 | Santeri Viinamäki |
+| Events | [Table decorations during reception](https://commons.wikimedia.org/wiki/File:Table_decorations_during_reception.jpg) | CC BY-SA 4.0 | Jess Mann |
+| Handyman | [Handyman measuring a board](https://commons.wikimedia.org/wiki/File:Handyman_measuring_a_board.jpg) | CC BY 2.0 | Ivan Radic |
+| Home Improvement | [2024-04-30 Carpenter at work DSC 0205](https://commons.wikimedia.org/wiki/File:2024-04-30_Carpenter_at_work_DSC_0205.JPG) | CC BY-SA 4.0 | Bärbel Miemietz |
+| HVAC | [379th ECES HVAC technicians combat rising temperatures](https://commons.wikimedia.org/wiki/File:379th_ECES_HVAC_technicians_combat_rising_temperatures_(8502257).jpg) | Public domain | U.S. Air Force / Airman 1st Class Derrick Bole |
+| Landscaping | [Gardener tending to plants with care in a vibrant garden](https://commons.wikimedia.org/wiki/File:Gardener_tending_to_plants_with_care_in_a_vibrant_garden.jpg) | CC BY 2.0 | Shixart1985 |
+| Lawn Care | [Lawn care in a vibrant garden as a person mows the grass on a sunny day](https://commons.wikimedia.org/wiki/File:Lawn_care_in_a_vibrant_garden_as_a_person_mows_the_grass_on_a_sunny_day.jpg) | CC BY 2.0 | Shixart1985 |
+| Moving | [Arpin Van Lines moving van, Superior Township, Michigan](https://commons.wikimedia.org/wiki/File:Arpin_Van_Lines_moving_van_Superior_Township_Michigan.JPG) | CC BY 3.0 | Dwight Burdette |
+| Painting | [Fort Kochi - Wall Painters on ropes](https://commons.wikimedia.org/wiki/File:Fort_Kochi_-_Wall_Painters_on_ropes.jpg) | CC BY-SA 4.0 | Ingo Mehling |
+| Personal Services | [A hotel concierge handing room keys, Rome](https://commons.wikimedia.org/wiki/File:A_hotel_concierge_handing_room_keys,_Rome_-_3566.jpg) | CC BY-SA 3.0 | Jorge Royan |
+| Pet Services | [Fort Greene, Brooklyn - lady walking four dogs](https://commons.wikimedia.org/wiki/File:Fort_Greene_Brooklyn_NY_assorted_photos_near_Fulton_Street_2_lady_walking_four_dogs.jpg) | CC0 | Tomwsulcer |
+| Photography | [A man with a camera](https://commons.wikimedia.org/wiki/File:A_man_with_a_camera.jpg) | CC BY-SA 4.0 | Chandrakumarkma |
+| Plumbing | [Cameroon male plumber at work 03](https://commons.wikimedia.org/wiki/File:Cameroon_male_plumbier_at_work_03.jpg) | CC BY-SA 4.0 | Gatien TITCHO SEUMO |
+| Pressure Washing | [Car washing activity at a residential driveway](https://commons.wikimedia.org/wiki/File:Car_washing_activity_at_a_residential_driveway.jpg) | CC BY 2.0 | Shixart1985 |
+| Ride | [LTI TXII Taxi, Baku](https://commons.wikimedia.org/wiki/File:LTI_TXII_Taxi,_Baku.jpg) | CC BY 2.0 | shankar s. |
+| Technology | [Replacing hardware](https://commons.wikimedia.org/wiki/File:Replacing_hardware_160210-F-KR223-021.jpg) | Public domain | Airman 1st Class Jordyn Fetter, U.S. Air Force |
+| Tutoring | [The Tutoring Center](https://commons.wikimedia.org/wiki/File:The_Tutoring_Center_(5532422757).jpg) | CC BY 2.0 | Tulane Public Relations |
+
+**Remaining known gap:** these are stock photographs of generic/representative scenes for each
+trade, not photos of Servio's actual providers or listings - there's no way to have real "this is
+what our providers look like" photography until real providers are on the platform. If Servio
+wants to replace these with real provider/customer photos later, the only files that need to
+change are the 21 images at the two `categoryIcons/` paths above (or the `imageUrl` field per row
+in the database, once seeded) - no application code changes needed, same as before.
+
+## Homepage location box: now visually "locks in" a location
+
+Previously the location box at the top of the homepage was a plain, unstyled search input - it
+worked (typing opened a predictions dropdown, picking a place was remembered and passed along to
+category search results as real map bounds), but nothing about it *looked* like it was doing
+anything, so it wasn't obvious the location was actually being used to filter listings.
+
+**What changed** (`src/containers/LandingPage/CategoryHero/CategoryHero.js` and its CSS module):
+- The input now shows a location-pin icon (was the generic search-glass icon).
+- Once a real place is selected from the dropdown, the input is replaced by a green "locked in"
+  pill showing a checkmark, the chosen address, a **Change** link (reopens the input, pre-filled,
+  to pick somewhere else), and a small **x** (clears the location entirely). The subtitle text
+  below the heading also updates to say "Showing categories near <address>" while locked.
+- No backend or filtering logic changed - `goToCategory` already attached the selected place's
+  map bounds (`searchParams.bounds`) to every category search, and `SearchPage.duck.js` already
+  passes a `bounds` URL param straight through to the real `latlngBounds` search-listings query
+  param, so a locked-in location was already restricting results to that area; this pass only
+  made that fact visible in the UI.
+- General visual polish pass on the same component while in there: tighter heading tracking,
+  card-style shadows on the location box/search box/category tiles, a subtle hover lift + zoom on
+  category tiles, and a search icon inside the category filter box.

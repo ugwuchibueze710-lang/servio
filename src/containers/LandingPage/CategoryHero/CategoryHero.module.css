@@ -3,61 +3,202 @@
 .root {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 16px 24px 48px 24px;
+  padding: 28px 24px 56px 24px;
 }
 
+/* ================ Location bar ================ */
 /* Small, compact location bar - just used to change location, not a hero */
 .locationBar {
   max-width: 420px;
-  margin: 0 0 32px 0;
+  margin: 0 0 28px 0;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
 }
 
 .locationInput {
   width: 100%;
-  border: 1px solid var(--colorGrey300);
-  border-radius: 6px;
+  border: 1px solid var(--colorGrey200);
+  border-radius: var(--borderRadiusMedium);
   overflow: hidden;
+  background-color: var(--colorWhite);
+  box-shadow: var(--boxShadowLight);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus-within {
+    border-color: var(--marketplaceColor);
+    box-shadow: var(--boxShadowSectionLocationHover);
+  }
 }
 
+/* The pin icon box inside the (unlocked) location input - overrides the component's default
+   grey box + bottom-border-only styling with something that matches the rounded input above. */
+.locationInputIconBox {
+  width: 44px;
+  border-bottom: none !important;
+  background-color: transparent;
+  color: var(--colorGrey400);
+}
+
+.locationInputIcon {
+  width: 18px;
+  height: 18px;
+  stroke: var(--colorGrey500);
+  fill: var(--colorGrey500);
+}
+
+.locationInputField {
+  height: 48px !important;
+  padding-left: 4px !important;
+  font-size: 15px;
+  border-bottom: none !important;
+}
+
+.locationPredictions {
+  border-radius: var(--borderRadiusMedium);
+  box-shadow: var(--boxShadowPopupLight);
+}
+
+/* The "locked in" pill shown once a real place has been selected - a checkmark, the chosen
+   address, and Change/clear controls, so it's obvious a location is set and being used to
+   filter listings (see CategoryHero.js goToCategory). */
+.locationLocked {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 48px;
+  padding: 0 8px 0 14px;
+  border: 1px solid var(--colorSuccessLight);
+  border-radius: var(--borderRadiusMedium);
+  background-color: var(--colorSuccessSubtle);
+  box-shadow: var(--boxShadowLight);
+}
+
+.locationLockedIcon {
+  flex-shrink: 0;
+  width: 13px;
+  stroke: var(--colorSuccess);
+  fill: var(--colorSuccess);
+}
+
+.locationLockedText {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--colorGrey800);
+}
+
+.locationChangeButton {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--borderRadiusMedium);
+  background: none;
+  color: var(--marketplaceColor);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.locationClearButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--colorGrey500);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--colorWhite);
+    color: var(--colorGrey800);
+  }
+}
+
+/* ================ Heading ================ */
 .title {
-  font-size: 28px;
-  line-height: 1.2;
+  font-size: 30px;
+  line-height: 1.15;
   font-weight: 700;
-  margin: 0 0 8px 0;
+  letter-spacing: -0.02em;
+  color: var(--colorGrey900);
+  margin: 0 0 10px 0;
 
   @media (--viewportMedium) {
-    font-size: 36px;
+    font-size: 40px;
   }
 }
 
 .subtitle {
   font-size: 16px;
-  line-height: 1.4;
+  line-height: 1.5;
   color: var(--colorGrey700);
-  margin: 0 0 24px 0;
+  margin: 0 0 28px 0;
   max-width: 640px;
+
+  & strong {
+    color: var(--colorGrey900);
+    font-weight: 700;
+  }
 }
 
+/* ================ Category search box ================ */
 .categorySearch {
+  position: relative;
   margin: 0 0 32px 0;
   max-width: 480px;
+}
+
+.categorySearchIcon {
+  position: absolute;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  stroke: var(--colorGrey400);
+  fill: none;
+  pointer-events: none;
 }
 
 .categorySearchInput {
   width: 100%;
   box-sizing: border-box;
-  padding: 12px 16px;
+  padding: 13px 16px 13px 42px;
   font-size: 16px;
-  border: 1px solid var(--colorGrey300);
-  border-radius: 6px;
+  color: var(--colorGrey900);
+  border: 1px solid var(--colorGrey200);
+  border-radius: var(--borderRadiusMedium);
   background-color: var(--colorWhite);
+  box-shadow: var(--boxShadowLight);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::placeholder {
+    color: var(--colorGrey400);
+  }
 
   &:focus {
     outline: none;
     border-color: var(--marketplaceColor);
+    box-shadow: var(--boxShadowSectionLocationHover);
   }
 }
 
+/* ================ Category grid ================ */
 .grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -80,19 +221,24 @@
   justify-content: flex-end;
   position: relative;
   border: none;
-  border-radius: 10px;
+  border-radius: 14px;
   overflow: hidden;
   cursor: pointer;
   padding: 0;
   background-color: var(--colorGrey100);
   aspect-ratio: 4 / 3;
+  box-shadow: var(--boxShadowLight);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 
   &:hover,
-  &:focus {
-    transform: translateY(-2px);
+  &:focus-visible {
+    transform: translateY(-3px);
     box-shadow: var(--boxShadowListingCard);
     outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: var(--boxShadowListingCard), 0 0 0 2px var(--marketplaceColor);
   }
 }
 
@@ -103,18 +249,25 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.25s ease;
+}
+
+.tile:hover .tileImage {
+  transform: scale(1.04);
 }
 
 .tileLabel {
   position: relative;
   z-index: 1;
   width: 100%;
-  padding: 10px 8px;
+  padding: 14px 10px 12px 10px;
   font-size: 14px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--colorWhite);
   text-align: center;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72) 0%, rgba(0, 0, 0, 0.32) 55%, rgba(0, 0, 0, 0) 100%);
 
   @media (--viewportMedium) {
     font-size: 15px;
