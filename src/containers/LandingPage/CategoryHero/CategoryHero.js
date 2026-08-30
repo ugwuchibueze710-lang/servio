@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
 import { useConfiguration } from '../../../context/configurationContext';
@@ -87,6 +87,21 @@ const saveStoredLocation = value => {
 };
 
 /**
+ * Categories are fetched from the new database-backed endpoint (server/api/v2/categories.js -
+ * see MIGRATION_PLAN.md Phase 1) so the category system is admin-editable data, not a hardcoded
+ * list. If that endpoint isn't reachable yet (MONGODB_URI not configured, request fails, etc.)
+ * this falls back to the bundled static list/icons below, so the homepage never breaks.
+ */
+const normalizeApiCategory = apiCategory => ({
+  id: apiCategory.slug,
+  name: apiCategory.name,
+  shortName: apiCategory.name.toLowerCase(),
+  blurb: apiCategory.blurb,
+  imageUrl: apiCategory.imageUrl,
+  isRideCategory: !!apiCategory.isRideCategory,
+});
+
+/**
  * CategoryHero
  *
  * The homepage's main above-the-fold content: every service category is shown as a clickable
@@ -113,6 +128,7 @@ const CategoryHero = () => {
 
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState({ search: '', selectedPlace: null });
+  const [categories, setCategories] = useState(serviceCategories);
 
   // Load any previously chosen location once, on mount.
   useEffect(() => {
@@ -120,6 +136,27 @@ const CategoryHero = () => {
     if (stored) {
       setLocation(stored);
     }
+  }, []);
+
+  // Fetch the live, database-driven category list once, on mount. Falls back to (and starts out
+  // as) the bundled static list, so nothing on screen ever depends on this succeeding.
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/v2/categories')
+      .then(res => (res.ok ? res.json() : Promise.reject(new Error(`status ${res.status}`))))
+      .then(body => {
+        const apiCategories = Array.isArray(body?.data) ? body.data : [];
+        if (isMounted && apiCategories.length > 0) {
+          setCategories(apiCategories.map(normalizeApiCategory));
+        }
+      })
+      .catch(() => {
+        // Database not configured yet, or request failed - keep the static fallback list that's
+        // already in state. Intentionally silent; this is expected during early rollout.
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleLocationChange = value => {
@@ -131,15 +168,20 @@ const CategoryHero = () => {
 
   const normalizedQuery = query.trim().toLowerCase();
   const visibleCategories = normalizedQuery
-    ? serviceCategories.filter(
+    ? categories.filter(
         c =>
           c.name.toLowerCase().includes(normalizedQuery) ||
           c.shortName.toLowerCase().includes(normalizedQuery)
       )
-    : serviceCategories;
+    : categories;
+
+  const getCategoryImage = useCallback(
+    category => category.imageUrl || ICONS_BY_ID[category.id],
+    []
+  );
 
   const goToCategory = category => {
-    if (category.id === 'ride') {
+    if (category.id === 'ride' || category.isRideCategory) {
       history.push(createResourceLocatorString('RidePage', routeConfiguration, {}, {}));
       return;
     }
@@ -206,7 +248,7 @@ const CategoryHero = () => {
           >
             <img
               className={css.tileImage}
-              src={ICONS_BY_ID[category.id]}
+              src={getCategoryImage(category)}
               alt={category.name}
             />
             <span className={css.tileLabel}>{category.name}</span>

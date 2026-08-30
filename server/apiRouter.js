@@ -21,6 +21,16 @@ const rideInitiatePrivileged = require('./api/ride-initiate-privileged');
 const rideTransitionPrivileged = require('./api/ride-transition-privileged');
 const deleteAccount = require('./api/delete-account');
 const invoicePdf = require('./api/invoice-pdf');
+// New custom-backend (MongoDB) endpoints - see MIGRATION_PLAN.md. Namespaced under /v2 to
+// stay clearly separate from the legacy Sharetribe-era endpoints above during the migration.
+const categoriesV2 = require('./api/v2/categories');
+const authSignupV2 = require('./api/v2/auth/signup');
+const authLoginV2 = require('./api/v2/auth/login');
+const authMeV2 = require('./api/v2/auth/me');
+const { requireAuth } = require('./middleware/authenticate');
+const providersUpsertMeV2 = require('./api/v2/providers/upsertMe');
+const providersGetMeV2 = require('./api/v2/providers/getMe');
+const searchProvidersV2 = require('./api/v2/search/providers');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -28,6 +38,10 @@ const { authenticateFacebook, authenticateFacebookCallback } = require('./api/au
 const { authenticateGoogle, authenticateGoogleCallback } = require('./api/auth/google');
 
 const router = express.Router();
+
+// New /v2 endpoints (server/api/v2/*) take plain JSON bodies, unlike the legacy Transit-based
+// endpoints above - scope express.json() to just that path prefix so nothing else changes.
+router.use('/v2', express.json());
 
 // ================ API router middleware: ================ //
 
@@ -67,6 +81,22 @@ router.post('/delete-account', deleteAccount);
 // Optional, on-demand invoice/receipt PDF for a completed transaction (self-contained - see
 // server/api/invoice-pdf.js and server/invoice/*). Either party to the transaction can request it.
 router.get('/invoice-pdf/:transactionId', invoicePdf);
+
+// Phase 1 of the Sharetribe migration (see MIGRATION_PLAN.md): public, database-driven category
+// list. Returns 503 with a clear message if MONGODB_URI isn't configured yet.
+router.get('/v2/categories', categoriesV2);
+
+// Phase 2 of the Sharetribe migration (see MIGRATION_PLAN.md): JWT-based auth on the new AppUser
+// model. Lives alongside (does not yet replace) Sharetribe's own login/signup.
+router.post('/v2/auth/signup', authSignupV2);
+router.post('/v2/auth/login', authLoginV2);
+router.get('/v2/auth/me', requireAuth, authMeV2);
+
+// Phase 3 of the Sharetribe migration (see MIGRATION_PLAN.md): real provider profiles and
+// geospatial search. Search is public; creating/editing your own profile requires auth.
+router.post('/v2/providers/me', requireAuth, providersUpsertMeV2);
+router.get('/v2/providers/me', requireAuth, providersGetMeV2);
+router.get('/v2/search/providers', searchProvidersV2);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed
