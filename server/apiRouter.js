@@ -45,6 +45,8 @@ const ridesGetOneV2 = require('./api/v2/rides/getOne');
 const ridesListCandidatesV2 = require('./api/v2/rides/listCandidates');
 const ridesDriverRespondV2 = require('./api/v2/rides/driverRespond');
 const ridesCancelV2 = require('./api/v2/rides/cancel');
+const ridesUpdateStatusV2 = require('./api/v2/rides/updateStatus');
+const driversUpdateLocationV2 = require('./api/v2/drivers/updateLocation');
 const paymentsCreateBookingIntentV2 = require('./api/v2/payments/createBookingIntent');
 const paymentsCreateRideIntentV2 = require('./api/v2/payments/createRideIntent');
 const paymentsWebhookV2 = require('./api/v2/payments/webhook');
@@ -160,6 +162,12 @@ router.get('/v2/rides/candidates/mine', requireAuth, ridesListCandidatesV2);
 router.get('/v2/rides/:id', requireAuth, ridesGetOneV2);
 router.post('/v2/rides/:id/driver-respond', requireAuth, ridesDriverRespondV2);
 router.post('/v2/rides/:id/cancel', requireAuth, ridesCancelV2);
+// Driver-only forward lifecycle (driver_assigned -> ... -> trip_completed) - see
+// server/utils/rideStateMachine.js. Recomputes the real final fare server-side on completion.
+router.post('/v2/rides/:id/status', requireAuth, ridesUpdateStatusV2);
+// Throttled location ping while online (idle or mid-trip) - what getOne.js's driverLocation
+// and the eventual rider map read from.
+router.patch('/v2/drivers/me/location', requireAuth, driversUpdateLocationV2);
 
 // Phase 6 of the Sharetribe migration (see MIGRATION_PLAN.md): real Stripe payments for both
 // bookings and rides, sharing one integration. The webhook (registered above, pre-JSON-parser)

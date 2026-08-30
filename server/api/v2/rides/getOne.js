@@ -4,6 +4,11 @@
  * GET /api/v2/rides/:id - poll a single ride's real, current state. Only the requesting customer
  * or a driver who is a candidate/the assigned driver on it may view it - a stranger's ride ID
  * doesn't leak pickup/destination to anyone who guesses it.
+ *
+ * Once a driver is assigned, also returns their current, real location (from the same
+ * updateLocation.js pings that drive rideDispatch.js on the Sharetribe side) so a customer's map
+ * has something to plot - the direct equivalent of `rideDriverLocationSelector` reading the
+ * driver's Sharetribe listing `geolocation` in RidePage.duck.js today.
  */
 const RideRequest = require('../../../models/RideRequest');
 const Driver = require('../../../models/Driver');
@@ -42,7 +47,16 @@ module.exports = async (req, res) => {
       return;
     }
 
-    res.status(200).json({ ride });
+    let driverLocation = null;
+    if (ride.driver) {
+      const assignedDriver = await Driver.findById(ride.driver);
+      if (assignedDriver && assignedDriver.currentLocation && assignedDriver.currentLocation.coordinates) {
+        const [lng, lat] = assignedDriver.currentLocation.coordinates;
+        driverLocation = { lat, lng, updatedAt: assignedDriver.locationUpdatedAt || null };
+      }
+    }
+
+    res.status(200).json({ ride, driverLocation });
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error('[api/v2/rides getOne] failed:', err);

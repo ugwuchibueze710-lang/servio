@@ -41,6 +41,12 @@ const rideRequestSchema = new mongoose.Schema(
     estimatedDurationMinutes: { type: Number, min: 0 },
     estimatedFare: { type: Number, min: 0 },
     finalFare: { type: Number, min: 0 },
+    // Recorded only at trip_completed, from the driver's actual GPS-accumulated distance/
+    // duration (see server/api/v2/rides/updateStatus.js) - deliberately separate from the
+    // estimatedDistanceMiles/estimatedDurationMinutes above, which come from the pre-trip route
+    // estimate and are never overwritten, so the two can always be compared.
+    actualDistanceMiles: { type: Number, min: 0 },
+    actualDurationMinutes: { type: Number, min: 0 },
 
     status: { type: String, enum: STATUS_VALUES, default: 'requested', index: true },
 

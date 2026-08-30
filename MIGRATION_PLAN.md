@@ -186,6 +186,54 @@ entirely.
   done yet: actually calling this from the frontend, or the rest of the Ride rewire** - this is
   the prerequisite `RidePage.js`/`DriverRidePage.js` need before they can call `/api/v2/rides`/
   `/api/v2/drivers` at all; that rewiring is the next step.
+- **Phase 9 prerequisite - DONE: full ride lifecycle + live driver location on the new backend
+  (this change).** Reading `RidePage.js`/`DriverRidePage.js` in full (the actual inspection this
+  correction called for) showed Phase 5's original backend was missing several things the live
+  Sharetribe implementation already does, which would have made a straight frontend swap silently
+  regress real functionality:
+  - `POST /api/v2/rides/:id/status` - the assigned driver moving a ride through `driver_arriving
+    -> driver_arrived -> trip_started -> trip_completed`, one real step at a time
+    (`server/utils/rideStateMachine.js` refuses any skip), mirroring the granular lifecycle
+    `DriverRidePage.duck.js` already drives today.
+  - Completing a trip now requires the real, actually-driven distance/duration (the GPS-odometer
+    equivalent of what `DriverRidePage.js`'s odometer hook already captures) and recomputes a
+    genuine final fare from it via the new `server/utils/rideFare.js` - a numerically-identical
+    port of `calculateRideFare` (the client can't submit a distance/duration that produces a
+    fare and skip the recompute; a missing/negative value is a real 400, not a fallback to the
+    estimate).
+  - `POST /api/v2/rides` now computes `estimatedFare` server-side from the real Mapbox-derived
+    distance/duration too (previously it matched drivers but never priced the ride at all).
+  - Fixed a real matching bug this inspection surfaced: the original candidate query only
+    checked `isOnline`, so a driver already mid-trip on one ride could be handed a second ride's
+    candidate slot. `POST /api/v2/rides` now excludes any driver with an active
+    (`driver_assigned`/`driver_arriving`/`driver_arrived`/`trip_started`) ride from new candidate
+    pools, without touching `isOnline` itself (a driver mid-trip is still legitimately "online"
+    for location-tracking purposes - see next point).
+  - `PATCH /api/v2/drivers/me/location` - the throttled (~5-15s) location ping a driver's app
+    sends while online, whether idle or mid-trip, refused if they're not online. `GET
+    /api/v2/rides/:id` now returns the assigned driver's real current location alongside the
+    ride, so a customer's map has something genuine to plot - the direct equivalent of
+    `rideDriverLocationSelector` reading a Sharetribe listing's `geolocation` today.
+  
+  14 automated checks covered all of this (fabricated-fare rejection, real server-computed fare,
+  the busy-driver exclusion, wrong-driver and skip-ahead rejections, sequential transitions, the
+  trip-completion fare recompute actually differing from the estimate, location updates refused
+  while offline and accepted while online, and a stranger being refused the ride entirely) - see
+  "How Phase 2 was tested" below. **Known, disclosed behavior differences from the live
+  Sharetribe version, kept deliberately rather than papered over:** (1) dispatch here broadcasts
+  to up to 5 nearby drivers at once (Phase 5's existing, tested design) rather than the live
+  version's one-at-a-time sequential retry with a 3-attempt limit - `RidePage.js`'s "try the next
+  driver" retry UI will need to become a single "notifying nearby drivers" wait state once the
+  frontend is rewired, not a like-for-like swap. (2) Payment happens after trip completion here
+  (Phase 6), not pre-authorized before a driver is even dispatched like the live
+  `PENDING_PAYMENT` step - post-paid is standard for ride-hailing apps, but it is a real change
+  from what's live today. (3) Fee-tiered cancellation charges (the live version's per-state
+  cancellation fee) are **not yet implemented** here - `POST /api/v2/rides/:id/cancel` still
+  cancels for free from any pre-trip state; adding a real charge for it needs its own Stripe
+  path and was left out of this pass rather than adding an inert fee field nothing actually
+  collects. **Still not done: actually rewiring `RidePage.js`/`DriverRidePage.js`** to call any
+  of this - that's the next, genuinely risky step, now that the backend it would call is at real
+  functional parity (net of the three disclosed differences above) with what's live.
 - **Phase 9 - Frontend rewire**, ongoing throughout: remove `sharetribe-flex-sdk` calls from each
   `*.duck.js` file as its backing phase lands; this is the biggest single piece of work by file
   count.
