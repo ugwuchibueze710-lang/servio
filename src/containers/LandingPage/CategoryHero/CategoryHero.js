@@ -38,6 +38,8 @@ import iconLawnCare from '../../../assets/categoryIcons/lawn-care.jpg';
 import iconPressureWashing from '../../../assets/categoryIcons/pressure-washing.jpg';
 import iconPainting from '../../../assets/categoryIcons/painting.jpg';
 
+import BlurFade from '../../../components/magicui/BlurFade';
+
 import css from './CategoryHero.module.css';
 
 const ICONS_BY_ID = {
@@ -280,22 +282,27 @@ const CategoryHero = () => {
         )}
       </div>
 
-      <span className={css.titleAccent} aria-hidden="true" />
-      <h1 className={css.title}>What service do you need?</h1>
-      <p className={css.subtitle}>
-        {isLocationLocked ? (
-          <>
-            Showing categories near <strong>{location.search}</strong> - tap one to see
-            who&apos;s available.
-          </>
-        ) : (
-          <>
-            Every category below is live and searchable. Set your location above, then tap a
-            category to see who&apos;s available near you - if nobody has signed up yet in your
-            area, you&apos;ll see that too.
-          </>
-        )}
-      </p>
+      {/* One-time entrance fade for the headline block only - the location bar above and the
+          category search/grid below are untouched, so nothing about how the categories look or
+          behave changes. */}
+      <BlurFade direction="up" duration={0.45}>
+        <span className={css.titleAccent} aria-hidden="true" />
+        <h1 className={css.title}>What service do you need?</h1>
+        <p className={css.subtitle}>
+          {isLocationLocked ? (
+            <>
+              Showing categories near <strong>{location.search}</strong> - tap one to see
+              who&apos;s available.
+            </>
+          ) : (
+            <>
+              Every category below is live and searchable. Set your location above, then tap a
+              category to see who&apos;s available near you - if nobody has signed up yet in your
+              area, you&apos;ll see that too.
+            </>
+          )}
+        </p>
+      </BlurFade>
 
       <div className={css.categorySearch}>
         <IconSearch className={css.categorySearchIcon} />

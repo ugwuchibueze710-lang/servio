@@ -18,6 +18,8 @@ import {
   NotificationBadge,
 } from '../../../../components';
 
+import ModeBadge from '../../../../components/ModeBadge/ModeBadge';
+
 import css from './TopbarMobileMenu.module.css';
 
 const CustomLinkComponent = ({ linkConfig, currentPage }) => {
@@ -213,6 +215,8 @@ const TopbarMobileMenu = props => {
         <InlineTextButton rootClassName={css.logoutButton} onClick={onLogout}>
           <FormattedMessage id="TopbarMobileMenu.logoutLink" />
         </InlineTextButton>
+
+        <ModeBadge viewMode={viewMode} className={css.modeBadge} />
 
         <ul className={css.accountLinksWrapper}>
           <li className={classNames(css.inbox, currentPageClass(`InboxPage:${inboxTab}`))}>

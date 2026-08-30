@@ -6,19 +6,35 @@
   border-top: 1px solid var(--colorGrey100);
   box-shadow: var(--boxShadowPopup);
   border-radius: 0 0 2px 2px;
-  transition: var(--transitionStyleButton);
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+  transform-origin: top center;
 }
 
 .isClosed {
   visibility: hidden;
   opacity: 0;
+  transform: translateY(-4px) scale(0.98);
   pointer-events: none;
 }
 
 .isOpen {
   visibility: visible;
   opacity: 1;
+  transform: translateY(0) scale(1);
   pointer-events: auto;
+}
+
+/* Anyone who's asked the OS/browser for less motion still gets the same open/close behavior -
+   just as an instant swap instead of a moving, scaling popup. */
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: opacity 0.16s ease, visibility 0.16s;
+  }
+
+  .isClosed,
+  .isOpen {
+    transform: none;
+  }
 }
 
 .content {

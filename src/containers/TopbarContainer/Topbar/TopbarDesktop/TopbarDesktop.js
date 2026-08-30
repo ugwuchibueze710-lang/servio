@@ -18,6 +18,7 @@ import {
 
 import TopbarSearchForm from '../TopbarSearchForm/TopbarSearchForm';
 import CustomLinksMenu from './CustomLinksMenu/CustomLinksMenu';
+import ModeBadge from '../../../../components/ModeBadge/ModeBadge';
 
 import css from './TopbarDesktop.module.css';
 
@@ -116,6 +117,9 @@ const ProfileMenu = ({
         <Avatar className={css.avatar} user={currentUser} disableProfileLink />
       </MenuLabel>
       <MenuContent className={css.profileMenuContent}>
+        <MenuItem key="modeBadge" rootClassName={css.modeBadgeMenuItem}>
+          <ModeBadge viewMode={viewMode} />
+        </MenuItem>
         {showManageListingsLink ? (
           <MenuItem key="ManageListingsPage">
             <NamedLink

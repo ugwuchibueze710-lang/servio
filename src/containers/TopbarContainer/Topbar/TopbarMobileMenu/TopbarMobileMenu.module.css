@@ -93,6 +93,13 @@
   }
 }
 
+/* <ModeBadge> sits between the logout link and the account links list - a quiet, non-clickable
+   status pill naming whichever mode (Customer/Provider) is currently active, so mode never has to
+   be inferred from which links happen to be visible below it. */
+.modeBadge {
+  margin: 0 0 20px 0;
+}
+
 .customLinkFont {
   /* Font */
   font-weight: var(--fontWeightBold);

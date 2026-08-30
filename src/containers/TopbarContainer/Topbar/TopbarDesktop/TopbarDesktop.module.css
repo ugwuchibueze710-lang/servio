@@ -27,11 +27,13 @@
 /* logo */
 .logoLink {
   border-bottom: 0px solid;
-  transition: var(--transitionStyleButton);
+  transition: border-color 0.15s ease-in-out, border-bottom-width 0.15s ease-in-out,
+    transform 0.15s ease-in-out;
 }
 .logoLink:hover {
   border-bottom: 4px solid var(--marketplaceColor);
   border-radius: 0;
+  transform: translateY(-1px);
 }
 
 /* Search */
@@ -198,6 +200,16 @@
 .profileMenuContent {
   min-width: 276px;
   padding-top: 20px;
+}
+
+/* Wraps <ModeBadge> at the top of the account dropdown - a plain list separator, not a clickable
+   row, so it gets its own quiet styling instead of the hover/border treatment MenuItem links use
+   (see .menuLink below). */
+.modeBadgeMenuItem {
+  display: flex;
+  padding: 0 24px 14px 24px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--colorGrey100);
 }
 
 /* left animated "border" like hover element */

@@ -81,6 +81,7 @@
   margin: 0;
   border-width: 0px;
   background-color: transparent;
+  transition: background-color 0.15s ease;
 
   /* Hovers */
   &:enabled {
@@ -88,7 +89,7 @@
   }
   &:enabled:hover,
   &:enabled:active {
-    background-color: transparent;
+    background-color: var(--colorGrey50, var(--colorGrey100));
     box-shadow: none;
   }
   &:disabled {
