@@ -31,6 +31,19 @@ const { requireAuth } = require('./middleware/authenticate');
 const providersUpsertMeV2 = require('./api/v2/providers/upsertMe');
 const providersGetMeV2 = require('./api/v2/providers/getMe');
 const searchProvidersV2 = require('./api/v2/search/providers');
+const bookingsCreateV2 = require('./api/v2/bookings/create');
+const bookingsListMineV2 = require('./api/v2/bookings/listMine');
+const bookingsListInboxV2 = require('./api/v2/bookings/listInbox');
+const bookingsRespondV2 = require('./api/v2/bookings/respond');
+const bookingsUpdateStatusV2 = require('./api/v2/bookings/updateStatus');
+const driversUpsertMeV2 = require('./api/v2/drivers/upsertMe');
+const driversGetMeV2 = require('./api/v2/drivers/getMe');
+const driversSetStatusV2 = require('./api/v2/drivers/setStatus');
+const ridesCreateV2 = require('./api/v2/rides/create');
+const ridesGetOneV2 = require('./api/v2/rides/getOne');
+const ridesListCandidatesV2 = require('./api/v2/rides/listCandidates');
+const ridesDriverRespondV2 = require('./api/v2/rides/driverRespond');
+const ridesCancelV2 = require('./api/v2/rides/cancel');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -97,6 +110,27 @@ router.get('/v2/auth/me', requireAuth, authMeV2);
 router.post('/v2/providers/me', requireAuth, providersUpsertMeV2);
 router.get('/v2/providers/me', requireAuth, providersGetMeV2);
 router.get('/v2/search/providers', searchProvidersV2);
+
+// Phase 4 of the Sharetribe migration (see MIGRATION_PLAN.md): the real booking lifecycle -
+// customer requests, provider inbox, accept/decline, and status tracking through to completion.
+router.post('/v2/bookings', requireAuth, bookingsCreateV2);
+router.get('/v2/bookings/mine', requireAuth, bookingsListMineV2);
+router.get('/v2/bookings/inbox', requireAuth, bookingsListInboxV2);
+router.post('/v2/bookings/:id/respond', requireAuth, bookingsRespondV2);
+router.post('/v2/bookings/:id/status', requireAuth, bookingsUpdateStatusV2);
+
+// Phase 5 of the Sharetribe migration (see MIGRATION_PLAN.md): driver onboarding, the
+// online/offline toggle, and real ride matching (geospatial nearby-driver search + an atomic
+// accept so two drivers can't both win the same ride). Polling-based for now - Socket.IO push
+// events are part of the Phase 9 frontend rewire.
+router.post('/v2/drivers/me', requireAuth, driversUpsertMeV2);
+router.get('/v2/drivers/me', requireAuth, driversGetMeV2);
+router.post('/v2/drivers/me/status', requireAuth, driversSetStatusV2);
+router.post('/v2/rides', requireAuth, ridesCreateV2);
+router.get('/v2/rides/candidates/mine', requireAuth, ridesListCandidatesV2);
+router.get('/v2/rides/:id', requireAuth, ridesGetOneV2);
+router.post('/v2/rides/:id/driver-respond', requireAuth, ridesDriverRespondV2);
+router.post('/v2/rides/:id/cancel', requireAuth, ridesCancelV2);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

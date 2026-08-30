@@ -62,12 +62,45 @@ entirely.
   is Phase 9 work, deliberately deferred so today's live search (which does work end-to-end on
   Sharetribe right now) isn't put at risk until the new path has a live database backing it and a
   provider profile UI (also Phase 9) for people to actually register through.
-- **Phase 4 - Booking lifecycle.** Customer service requests, provider inbox, accept/decline,
-  status tracking (section 6/7).
-- **Phase 5 - Ride matching.** `Driver`/`Vehicle` onboarding, online/offline toggle,
-  `RideRequest` state machine, Socket.IO for real-time accept/decline and location updates
-  (section 12-14). Servio's existing `RidePage.js`/`DriverRidePage.js` get rewired to call the new
-  API instead of Sharetribe's `ride` transaction process.
+- **Phase 4 - DONE (this change).** The real booking lifecycle, enforced by
+  `server/utils/bookingStateMachine.js` rather than trusting whatever status the client sends:
+  `POST /api/v2/bookings` (a customer's request - rejected if the business doesn't exist, is
+  inactive, or doesn't actually offer the requested category), `GET /api/v2/bookings/mine`
+  (customer's own list), `GET /api/v2/bookings/inbox` (provider's inbox across all their
+  businesses - an honest empty list with a clear reason if they have no provider profile yet),
+  `POST /api/v2/bookings/:id/respond` (accept/decline - only the actual business owner can do
+  this, checked against the real `Business.owner`, not just "any logged-in provider"), and
+  `POST /api/v2/bookings/:id/status` (scheduled -> in_progress -> completed, provider-only;
+  cancellation, either party, from any non-terminal state). 16 automated checks covered
+  category/business validation, cross-account authorization (a non-owner can't see or act on
+  someone else's booking), the full accept -> scheduled -> in_progress -> completed happy path,
+  rejecting an already-handled or terminal-state transition, and a customer cancelling their own
+  still-open request - see "How Phase 2 was tested" below for the method/caveat. **Not yet wired
+  to the frontend** - same reasoning as Phase 3: the request/inbox UI is part of Phase 9, once
+  enough of the backend exists to make a full UI pass worthwhile in one go rather than three.
+- **Phase 5 - DONE for matching, POLLING not push (this change).** Driver onboarding
+  (`POST /api/v2/drivers/me` writes a real `Driver` + `Vehicle` together - you can't go online
+  without both) and the online/offline toggle (`POST /api/v2/drivers/me/status` - refuses to go
+  online without a registered vehicle or without a current location, since matching depends on
+  both). Ride requests (`POST /api/v2/rides`) run real matching immediately: a genuine
+  `$near`/2dsphere query against currently-online drivers within 10 miles of pickup:
+  either real candidates and a `searching` status, or a real, honest `no_drivers_found` - the
+  "No drivers found nearby yet" behavior from the very first ask about this feature. Drivers see
+  their pending requests via `GET /api/v2/rides/candidates/mine` and respond via
+  `POST /api/v2/rides/:id/driver-respond` - acceptance is one atomic database update keyed on the
+  ride still being `searching` and that driver's candidate slot still being `pending`, so two
+  drivers racing to accept the same ride can never both win (verified with an actual concurrent
+  race in the test, not just sequential calls) - and once every candidate has declined, the ride
+  honestly moves to `no_drivers_found` instead of sitting in limbo. `POST /api/v2/rides/:id/cancel`
+  lets the customer back out any time before a trip starts. 13 automated checks covered all of
+  this, including the real concurrent-accept race - see "How Phase 2 was tested" below.
+  **Deliberately NOT done in this pass: Socket.IO / real-time push, and rewiring
+  `RidePage.js`/`DriverRidePage.js`.** Right now this is a poll-based API only - a driver's app
+  would need to poll `candidates/mine` and a customer's app would poll `GET /api/v2/rides/:id` for
+  status changes. Real-time push and swapping Servio's existing (already-real, Mapbox-based)
+  `RidePage.js`/`DriverRidePage.js` over to call this API instead of Sharetribe's `ride`
+  transaction process both belong in Phase 9, once the frontend rewire is happening as one
+  deliberate pass rather than three separate half-migrated ride screens.
 - **Phase 6 - Payments.** Stripe Payment Intents + Stripe Connect (for provider/driver payouts),
   replacing Sharetribe's Stripe integration, shared by both service bookings and rides (section
   15-17). `stripe` is already added to `package.json` for this phase.
