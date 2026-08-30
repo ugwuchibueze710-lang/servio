@@ -1,2 +1,0 @@
-﻿Complete Servio v2 build: notifications, cancellation fees, ranked search,
-Project Passport, real auth, Stripe payments, and fix Sharetribe boot coupling
