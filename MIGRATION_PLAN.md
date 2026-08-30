@@ -142,6 +142,50 @@ entirely.
   guard, and the deactivate-forces-offline behavior - see "How Phase 2 was tested" below. **Not
   done: admin views for bookings/rides** (oversight/dispute-resolution listing) - lower priority
   than the account/category/provider/driver management that exists now, left for a later pass.
+- **Important correction found while starting Phase 9, and the decision that came out of it.**
+  Before writing any frontend-rewire code, this project's own rule ("inspect before modifying")
+  meant actually reading how Ride works today before touching `RidePage.js`/`DriverRidePage.js`.
+  That reading turned up something the Phase 5 write-up above didn't know when it was written:
+  Ride already has a real, working, live implementation - built entirely on Sharetribe, not a
+  gap that needed filling. `RIDE_INTEGRATION_REPORT.md` documents why (Sharetribe Flex has no
+  arbitrary custom database tables, so Ride was built as a Sharetribe transaction process, with
+  drivers as Sharetribe listings, pricing as a Console-managed asset, and throttled-polling
+  location tracking). `server/api/ride-initiate-privileged.js` and `server/api-util/
+  rideDispatch.js` are that implementation - real Mapbox-derived inputs, real nearest-driver
+  matching against live Sharetribe listings, and a genuine `409 NO_DRIVER_FOUND` when no one's
+  online nearby. In other words, **Phase 5 above built a second, redundant matching system**
+  rather than filling an actual gap.
+  
+  I stopped and asked rather than either quietly overwriting the working Sharetribe version or
+  quietly abandoning Phase 5. The decision: **migrate Ride to the new backend anyway** - Phase
+  5's MongoDB-based driver/ride matching becomes the real system of record for Ride, and the
+  Sharetribe-based implementation gets retired once the new one is wired up and tested. This is
+  knowingly the riskier path (replacing something real and live, not filling a gap), so it's
+  being done with the extra care that implies - one verified piece at a time, same as every
+  phase before it.
+- **Phase 9 prerequisite - DONE: Sharetribe-to-AppUser auth bridge (this change).** Every
+  `/api/v2` endpoint from Phase 2 onward requires a Phase-2 JWT tied to an `AppUser` document -
+  but someone browsing the live site right now is authenticated as a *Sharetribe* user (a
+  session cookie), with no such JWT and usually no `AppUser` yet. `POST /api/v2/auth/bridge`
+  closes that gap: it uses the same cookie-token-store + `getSdk` pattern every other privileged
+  Sharetribe endpoint already relies on (`delete-account.js`, `ride-initiate-privileged.js`) to
+  ask Sharetribe who is really signed in, then finds-or-creates a matching `AppUser` by email
+  and returns a normal Phase-2 JWT - the same shape `signup.js`/`login.js` already return, so
+  every existing `/api/v2` endpoint works unmodified once the frontend calls this first. Real
+  safeguards, not just a happy path: refuses to link or create anything unless Sharetribe says
+  the account's email is verified (otherwise someone could claim an email they don't own);
+  reuses the same `AppUser` on every repeat call instead of creating duplicates; if bridging
+  would match an email already linked to a *different* Sharetribe account id, it refuses with a
+  409 instead of silently reassigning access; a brand-new `AppUser` gets an unusable random
+  password hash (bcrypt of 32 random bytes) since it was never given a real password. Adds one
+  new, optional, indexed field to `AppUser` (`sharetribeUserId`) - existing accounts and the
+  Phase 2 signup/login flow are untouched. 10 automated checks covered all of this (no session,
+  unverified email, new-account creation with a valid decodable JWT, idempotent repeat calls,
+  linking an existing password-signup account without losing its roles, the conflict case, DB
+  unavailable, and a malformed Sharetribe response) - see "How Phase 2 was tested" below. **Not
+  done yet: actually calling this from the frontend, or the rest of the Ride rewire** - this is
+  the prerequisite `RidePage.js`/`DriverRidePage.js` need before they can call `/api/v2/rides`/
+  `/api/v2/drivers` at all; that rewiring is the next step.
 - **Phase 9 - Frontend rewire**, ongoing throughout: remove `sharetribe-flex-sdk` calls from each
   `*.duck.js` file as its backing phase lands; this is the biggest single piece of work by file
   count.

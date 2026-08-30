@@ -24,6 +24,10 @@ const appUserSchema = new mongoose.Schema(
     },
     notificationsEnabled: { type: Boolean, default: true },
     active: { type: Boolean, default: true },
+    // Set only by server/api/v2/auth/bridge.js when this account is linked to a Sharetribe
+    // account (see MIGRATION_PLAN.md, Ride migration prerequisite). Optional/sparse: accounts
+    // created via the plain Phase-2 signup never get one unless/until they later bridge.
+    sharetribeUserId: { type: String, index: true, sparse: true },
     // Admin access (Phase 8, see MIGRATION_PLAN.md). Deliberately no API endpoint can ever set
     // this to true - see server/middleware/requireAdmin.js and server/scripts/makeAdmin.js -
     // only direct database access can grant it, so there's no self-escalation path.

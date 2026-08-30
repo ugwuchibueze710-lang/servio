@@ -27,6 +27,7 @@ const categoriesV2 = require('./api/v2/categories');
 const authSignupV2 = require('./api/v2/auth/signup');
 const authLoginV2 = require('./api/v2/auth/login');
 const authMeV2 = require('./api/v2/auth/me');
+const authBridgeV2 = require('./api/v2/auth/bridge');
 const { requireAuth } = require('./middleware/authenticate');
 const providersUpsertMeV2 = require('./api/v2/providers/upsertMe');
 const providersGetMeV2 = require('./api/v2/providers/getMe');
@@ -127,6 +128,11 @@ router.get('/v2/categories', categoriesV2);
 router.post('/v2/auth/signup', authSignupV2);
 router.post('/v2/auth/login', authLoginV2);
 router.get('/v2/auth/me', requireAuth, authMeV2);
+// No requireAuth here by design - the caller doesn't have an AppUser JWT yet. This endpoint
+// authenticates via the Sharetribe session cookie instead (same pattern as
+// ride-initiate-privileged.js / delete-account.js) and hands back a JWT once it's verified who
+// is really asking. See server/api/v2/auth/bridge.js for the full rationale.
+router.post('/v2/auth/bridge', authBridgeV2);
 
 // Phase 3 of the Sharetribe migration (see MIGRATION_PLAN.md): real provider profiles and
 // geospatial search. Search is public; creating/editing your own profile requires auth.
