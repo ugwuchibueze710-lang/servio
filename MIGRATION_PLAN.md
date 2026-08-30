@@ -504,3 +504,43 @@ Root cause: `LocationAutocompleteInputImpl.js` defaults its prediction list-item
 unless the caller passes `useDarkText={true}`, and the original `CategoryHero.js` change above
 didn't pass it. Fixed by adding `useDarkText={true}` to the `LocationAutocompleteInput` call - a
 one-line change, no other behavior affected.
+
+## Temporary no-email tester sign up / log in (replaces AuthenticationPage for now)
+
+Sharetribe's own sign up/log in (email + password + email verification) is still fully wired up
+in the codebase and still the credentials Render is configured with - nothing about Sharetribe
+itself was removed. What changed is which page renders at `/login`, `/signup` and
+`/signup/:userType` (see `src/routing/routeConfiguration.js`): those three routes now point at a
+brand new `src/containers/TesterAuthPage/TesterAuthPage.js` instead of the Sharetribe-backed
+`AuthenticationPage.js`. `AuthenticationPage.js` itself is untouched, so reverting is just
+pointing those three route entries back at it.
+
+**Why:** early testers need to get into the app with zero friction while the site is still in a
+testing phase - no email, no password, no verification step. Pick Customer or Provider, type a
+name, and you're in immediately.
+
+**How it works:** a brand new, self-contained system with no dependency on MongoDB or Sharetribe:
+- `server/state/testerAccounts.js` - an in-memory `Map` of accounts, keyed by a random token. No
+  database needed at all, which also means every account here is genuinely temporary - it
+  disappears on its own after `TESTER_SESSION_TTL_HOURS` hours (defaults to 4), *and* every one of
+  them is wiped on every server restart/redeploy. Both are accepted trade-offs of "works today,
+  before Mongo is even set up," not bugs.
+- `server/api/v2/testerAuth/{signup,me,logout}.js` - three plain endpoints (`POST
+  /api/v2/tester-auth/signup`, `GET /api/v2/tester-auth/me`, `POST /api/v2/tester-auth/logout`),
+  mounted in `server/apiRouter.js` right after the existing `/v2/auth/*` block.
+- `src/util/testerAuth.js` - the frontend client, storing the session token in `localStorage`
+  under its own keys (`servio.testerSessionToken` / `servio.testerSessionUser`), entirely separate
+  from `src/util/apiV2.js`'s AppUser-bridge token.
+- `src/containers/TesterAuthPage/TesterAuthPage.js` - the page itself: a role toggle, a name
+  field, one button. Shows "you're signed in" with a Continue link once signed up.
+
+**Scope, deliberately kept narrow:** only the sign up/log in *pages* changed. The Topbar, current
+listings search, provider/booking/ride flows, and everything else were not touched and don't know
+this new session exists - a tester using this flow gets into the app but the rest of the UI still
+reflects whatever Sharetribe/AppUser auth state it already had. Wiring this new session into the
+rest of the app (Topbar, protected `auth: true` routes, etc.) is a follow-up, not part of this
+change.
+
+**Known trade-off to flag if testing feels flaky:** because accounts live only in server memory,
+a Render free-tier instance spinning down from inactivity (or any redeploy) silently logs every
+tester out - there is nothing to migrate or recover, they just sign up again with the same name.

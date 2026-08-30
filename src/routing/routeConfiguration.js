@@ -13,6 +13,10 @@ import { NamedRedirect } from '../components';
 const pageDataLoadingAPI = getPageDataLoadingAPI();
 
 const AuthenticationPage = loadable(() => import(/* webpackChunkName: "AuthenticationPage" */ '../containers/AuthenticationPage/AuthenticationPage'));
+// Note: a temporary no-email 'TesterAuthPage' used to be linked at /login, /signup and
+// /signup/:userType while Sharetribe auth was disconnected for early testing. It's back to
+// AuthenticationPage now (see MIGRATION_PLAN.md); TesterAuthPage.js itself is left in the repo,
+// unused, in case a no-email test flow is needed again later - just re-point these routes to it.
 const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" */ '../containers/CheckoutPage/CheckoutPage'));
 const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../containers/CMSPage/CMSPage'));
 const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDetailsPage" */ '../containers/ContactDetailsPage/ContactDetailsPage'));

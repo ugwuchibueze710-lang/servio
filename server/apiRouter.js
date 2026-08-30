@@ -21,6 +21,10 @@ const rideInitiatePrivileged = require('./api/ride-initiate-privileged');
 const rideTransitionPrivileged = require('./api/ride-transition-privileged');
 const deleteAccount = require('./api/delete-account');
 const invoicePdf = require('./api/invoice-pdf');
+// Best-effort auto-verification for brand new Sharetribe signups - see
+// server/api/auto-verify-email.js and server/api-util/integrationSdk.js for why this exists and
+// why it never blocks or breaks signup if it's not configured or fails.
+const autoVerifyEmail = require('./api/auto-verify-email');
 // New custom-backend (MongoDB) endpoints - see MIGRATION_PLAN.md. Namespaced under /v2 to
 // stay clearly separate from the legacy Sharetribe-era endpoints above during the migration.
 const categoriesV2 = require('./api/v2/categories');
@@ -28,6 +32,11 @@ const authSignupV2 = require('./api/v2/auth/signup');
 const authLoginV2 = require('./api/v2/auth/login');
 const authMeV2 = require('./api/v2/auth/me');
 const authBridgeV2 = require('./api/v2/auth/bridge');
+// Temporary, no-email tester sign up/log in - see server/state/testerAccounts.js and
+// MIGRATION_PLAN.md. Entirely separate from the Sharetribe and AppUser auth above.
+const testerAuthSignup = require('./api/v2/testerAuth/signup');
+const testerAuthMe = require('./api/v2/testerAuth/me');
+const testerAuthLogout = require('./api/v2/testerAuth/logout');
 const { requireAuth } = require('./middleware/authenticate');
 const providersUpsertMeV2 = require('./api/v2/providers/upsertMe');
 const providersGetMeV2 = require('./api/v2/providers/getMe');
@@ -118,6 +127,7 @@ router.post('/transition-privileged', transitionPrivileged);
 router.post('/ride/initiate-privileged', rideInitiatePrivileged);
 router.post('/ride/transition-privileged', rideTransitionPrivileged);
 router.post('/delete-account', deleteAccount);
+router.post('/auto-verify-email', autoVerifyEmail);
 
 // Optional, on-demand invoice/receipt PDF for a completed transaction (self-contained - see
 // server/api/invoice-pdf.js and server/invoice/*). Either party to the transaction can request it.
@@ -137,6 +147,10 @@ router.get('/v2/auth/me', requireAuth, authMeV2);
 // ride-initiate-privileged.js / delete-account.js) and hands back a JWT once it's verified who
 // is really asking. See server/api/v2/auth/bridge.js for the full rationale.
 router.post('/v2/auth/bridge', authBridgeV2);
+
+router.post('/v2/tester-auth/signup', testerAuthSignup);
+router.get('/v2/tester-auth/me', testerAuthMe);
+router.post('/v2/tester-auth/logout', testerAuthLogout);
 
 // Phase 3 of the Sharetribe migration (see MIGRATION_PLAN.md): real provider profiles and
 // geospatial search. Search is public; creating/editing your own profile requires auth.

@@ -145,6 +145,21 @@ export const rideTransitionPrivileged = body => {
   return post('/api/ride/transition-privileged', body);
 };
 
+// Best-effort: ask the server to mark a just-created account's email verified right away, using
+// Sharetribe's Integration API (see server/api/auto-verify-email.js). No body is needed - the
+// server figures out who to verify from the caller's own auth cookie, so this can only ever act
+// on the account the caller is already logged in as.
+//
+// This is called (and its result ignored either way - see src/ducks/auth.duck.js) immediately
+// after signup + login succeed. If it fails, or Integration API credentials simply haven't been
+// configured yet, nothing about signup/login breaks - the account is already fully usable, and
+// Sharetribe's own verification email is still sitting in the inbox as a fallback.
+export const autoVerifyEmail = () => {
+  return post('/api/auto-verify-email', undefined, {
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
 // Invoice PDF templates available for a completed transaction's downloadable invoice/receipt.
 // Keep in sync with server/invoice/templates/index.js (TEMPLATE_FILES).
 export const INVOICE_PDF_TEMPLATES = [

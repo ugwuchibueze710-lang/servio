@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as log from '../util/log';
 import { storableError } from '../util/errors';
 import { clearCurrentUser, fetchCurrentUser } from './user.duck';
-import { createUserWithIdp } from '../util/api';
+import { createUserWithIdp, autoVerifyEmail } from '../util/api';
 import { clearStoredReferralData } from '../util/webStorageHelpers';
 
 const authenticated = authInfo => authInfo?.isAnonymous === false;
@@ -112,6 +112,13 @@ const signupThunk = createAsyncThunk(
         dispatch(loginThunk({ username: params.email, password: params.password })).unwrap()
       )
       .then(() => {
+        // Best-effort, fire-and-forget: mark the new account verified right away so nobody has
+        // to notice or act on the verification email Sharetribe sends automatically on signup
+        // (see src/util/api.js#autoVerifyEmail and server/api/auto-verify-email.js for why this
+        // is always safe to ignore the result of - signup/login have already succeeded above
+        // regardless of whether this succeeds, is unconfigured, or fails).
+        autoVerifyEmail().catch(() => {});
+
         // Clear potential referral data from session storage
         clearStoredReferralData();
         return params;
