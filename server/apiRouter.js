@@ -32,6 +32,7 @@ const authSignupV2 = require('./api/v2/auth/signup');
 const authLoginV2 = require('./api/v2/auth/login');
 const authMeV2 = require('./api/v2/auth/me');
 const authBridgeV2 = require('./api/v2/auth/bridge');
+const authTestSignupV2 = require('./api/v2/auth/testSignup');
 // Temporary, no-email tester sign up/log in - see server/state/testerAccounts.js and
 // MIGRATION_PLAN.md. Entirely separate from the Sharetribe and AppUser auth above.
 const testerAuthSignup = require('./api/v2/testerAuth/signup');
@@ -147,6 +148,9 @@ router.get('/v2/auth/me', requireAuth, authMeV2);
 // ride-initiate-privileged.js / delete-account.js) and hands back a JWT once it's verified who
 // is really asking. See server/api/v2/auth/bridge.js for the full rationale.
 router.post('/v2/auth/bridge', authBridgeV2);
+// Also no requireAuth here - this IS the login mechanism (test mode: name + email, no password).
+// See server/api/v2/auth/testSignup.js for the full rationale.
+router.post('/v2/auth/test-signup', authTestSignupV2);
 
 router.post('/v2/tester-auth/signup', testerAuthSignup);
 router.get('/v2/tester-auth/me', testerAuthMe);

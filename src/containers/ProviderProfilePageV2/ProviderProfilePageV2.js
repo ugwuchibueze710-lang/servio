@@ -9,6 +9,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { NamedLink } from '../../components';
+import { hasAppUserToken } from '../../util/apiV2';
 import { userLocation } from '../../util/maps';
 import {
   fetchCategoriesV2Thunk,
@@ -38,10 +40,23 @@ const ProviderProfilePageV2 = () => {
   const [form, setForm] = useState(emptyForm);
   const [locationLabel, setLocationLabel] = useState(null);
 
+  // hasAppUserToken() reads localStorage, which doesn't exist during server-side rendering and
+  // must not be trusted on the very first client render either (it would disagree with the SSR
+  // markup and trip React's hydration-mismatch check) - starts null on both, then resolves one
+  // tick later, same pattern as Topbar.js's viewMode. This page no longer sits behind
+  // Sharetribe's router-level `auth: true` gate (see routeConfiguration.js), so it has to know
+  // for itself whether there's a session before fetching or rendering the real form.
+  const [signedIn, setSignedIn] = useState(null);
+
   useEffect(() => {
+    setSignedIn(hasAppUserToken());
+  }, []);
+
+  useEffect(() => {
+    if (!signedIn) return;
     dispatch(fetchCategoriesV2Thunk());
     dispatch(fetchMyProviderV2Thunk());
-  }, [dispatch]);
+  }, [dispatch, signedIn]);
 
   // Once the existing profile loads, populate the form from it (edit mode) - only runs once per
   // successful fetch, so it never stomps on changes the person is actively typing.
@@ -109,6 +124,24 @@ const ProviderProfilePageV2 = () => {
     }
     dispatch(upsertProviderV2Thunk(body));
   };
+
+  if (signedIn === null) {
+    // Same one-tick-later pattern as above: render nothing rather than guessing, so there's no
+    // flash of "please sign in" for someone who actually does have a session.
+    return <div className={css.root} />;
+  }
+
+  if (!signedIn) {
+    return (
+      <div className={css.root}>
+        <h1 className={css.title}>Set up your provider profile</h1>
+        <p className={css.errorText}>
+          You need to sign in first.{' '}
+          <NamedLink name="TestSignInPageV2">Sign in</NamedLink>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className={css.root}>

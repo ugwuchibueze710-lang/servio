@@ -27,6 +27,7 @@ import ProviderSearchPageV2 from './ProviderSearchPageV2/ProviderSearchPageV2.du
 import BookingRequestPageV2 from './BookingRequestPageV2/BookingRequestPageV2.duck';
 import MyBookingsPageV2 from './MyBookingsPageV2/MyBookingsPageV2.duck';
 import ProviderInboxPageV2 from './ProviderInboxPageV2/ProviderInboxPageV2.duck';
+import TestSignInPageV2 from './TestSignInPageV2/TestSignInPageV2.duck';
 import SearchPage from './SearchPage/SearchPage.duck';
 import StripePayoutPage from './StripePayoutPage/StripePayoutPage.duck';
 import TransactionPage from './TransactionPage/TransactionPage.duck';
@@ -56,6 +57,7 @@ export {
   BookingRequestPageV2,
   MyBookingsPageV2,
   ProviderInboxPageV2,
+  TestSignInPageV2,
   SearchPage,
   StripePayoutPage,
   TransactionPage,

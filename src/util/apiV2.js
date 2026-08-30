@@ -48,6 +48,22 @@ const storeToken = token => {
  * previously-bridged account is never reused for whoever logs in next on the same browser. */
 export const clearAppUserToken = () => storeToken(null);
 
+/**
+ * Store an AppUser JWT directly - used by the new test-mode sign-in flow (POST
+ * /api/v2/auth/test-signup, see TestSignInPageV2.js), which never goes through the Sharetribe
+ * bridge at all. Once this is set, ensureAppUserToken()/apiV2() use it exactly like a bridged
+ * token - every existing /api/v2 call works unmodified, since it's the same JWT shape either way.
+ */
+export const setAppUserToken = token => storeToken(token);
+
+/**
+ * Synchronous check for "is there a usable AppUser session at all right now" - used by v2 pages
+ * that no longer sit behind Sharetribe's router-level `auth: true` gate (see
+ * routeConfiguration.js) to decide whether to render their real content or a "sign in first"
+ * prompt pointing at TestSignInPageV2, without making a network call just to find out.
+ */
+export const hasAppUserToken = () => !!getStoredToken();
+
 const jsonRequest = (path, { method = 'GET', body, token } = {}) => {
   const headers = { 'Content-Type': 'application/json' };
   if (token) {

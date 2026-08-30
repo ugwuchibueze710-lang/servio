@@ -60,6 +60,9 @@ const MyBookingsPageV2 = loadable(() =>
 const ProviderInboxPageV2 = loadable(() =>
   import(/* webpackChunkName: "ProviderInboxPageV2" */ '../containers/ProviderInboxPageV2/ProviderInboxPageV2')
 );
+const TestSignInPageV2 = loadable(() =>
+  import(/* webpackChunkName: "TestSignInPageV2" */ '../containers/TestSignInPageV2/TestSignInPageV2')
+);
 const SearchPageWithMap = loadable(() => import(/* webpackChunkName: "SearchPageWithMap" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithMap'));
 const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPageWithGrid" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithGrid'));
 const ServiceCategoryPage = loadable(() => import(/* webpackChunkName: "ServiceCategoryPage" */ '../containers/ServiceCategoryPage/ServiceCategoryPage'));
@@ -315,11 +318,21 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     // frontend (backend has been built/tested since an earlier phase - see MIGRATION_PLAN.md).
     // Not linked from anywhere in the live UI yet; reached only by navigating to these paths
     // directly, same "parallel, unlinked route" pattern as /ride-v2 and /drive-v2 above.
+    // Sign in for the whole -v2 set (test mode: name + email, no password - see
+    // TestSignInPageV2.js). Deliberately public and NOT gated by Sharetribe's `auth`/`authPage`
+    // mechanism - it IS the way in for this parallel backend.
+    {
+      path: '/auth-v2',
+      name: 'TestSignInPageV2',
+      component: TestSignInPageV2,
+    },
+    // No `auth: true` here anymore - that gate was Sharetribe's own login state (state.auth),
+    // which the new backend doesn't require at all now that /auth-v2 exists. The page itself
+    // checks hasAppUserToken() and links to /auth-v2 if there's no session yet - see
+    // ProviderProfilePageV2.js.
     {
       path: '/provider-profile-v2',
       name: 'ProviderProfilePageV2',
-      auth: true,
-      authPage: 'LoginPage',
       component: ProviderProfilePageV2,
     },
     {
