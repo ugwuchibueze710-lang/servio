@@ -4,6 +4,7 @@ import classNames from 'classnames';
 import { FormattedMessage } from '../../../../util/reactIntl';
 import { ACCOUNT_SETTINGS_PAGES } from '../../../../routing/routeConfiguration';
 import { showCreateListingLinkForUser } from '../../../../util/userHelpers';
+import { MODE_CUSTOMER, MODE_PROVIDER } from '../../../../util/marketplaceMode';
 import {
   Avatar,
   InlineTextButton,
@@ -57,12 +58,52 @@ const InboxLink = ({ notificationCount, inboxTab }) => {
   );
 };
 
-const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLink, intl }) => {
+const ProfileMenu = ({
+  currentPage,
+  currentUser,
+  onLogout,
+  showManageListingsLink,
+  viewMode,
+  showProviderModeSwitch,
+  showCustomerModeSwitch,
+  onSwitchToProviderMode,
+  onSwitchToCustomerMode,
+  intl,
+}) => {
   const currentPageClass = page => {
     const isAccountSettingsPage =
       page === 'AccountSettingsPage' && ACCOUNT_SETTINGS_PAGES.includes(currentPage);
     return currentPage === page || isAccountSettingsPage ? css.currentPage : null;
   };
+
+  // Mode switching is mutually exclusive: only the switch INTO the mode that isn't currently
+  // active is ever shown, and only if the marketplace's role configuration allows that role for
+  // this account (see getCurrentUserTypeRoles in util/userHelpers.js).
+  const switchToProviderModeMaybe =
+    showProviderModeSwitch && viewMode === MODE_CUSTOMER ? (
+      <MenuItem key="switchToProviderMode">
+        <InlineTextButton rootClassName={css.menuLink} onClick={onSwitchToProviderMode}>
+          <span className={css.menuItemBorder} />
+          <FormattedMessage
+            id="TopbarDesktop.switchToProviderMode"
+            defaultMessage="Switch to Provider Mode"
+          />
+        </InlineTextButton>
+      </MenuItem>
+    ) : null;
+
+  const switchToCustomerModeMaybe =
+    showCustomerModeSwitch && viewMode === MODE_PROVIDER ? (
+      <MenuItem key="switchToCustomerMode">
+        <InlineTextButton rootClassName={css.menuLink} onClick={onSwitchToCustomerMode}>
+          <span className={css.menuItemBorder} />
+          <FormattedMessage
+            id="TopbarDesktop.switchToCustomerMode"
+            defaultMessage="Switch to Customer Mode"
+          />
+        </InlineTextButton>
+      </MenuItem>
+    ) : null;
 
   return (
     <Menu skipFocusOnNavigation={true}>
@@ -104,6 +145,8 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
             <FormattedMessage id="TopbarDesktop.accountSettingsLink" />
           </NamedLink>
         </MenuItem>
+        {switchToProviderModeMaybe}
+        {switchToCustomerModeMaybe}
         <MenuItem key="logout">
           <InlineTextButton rootClassName={css.logoutButton} onClick={onLogout}>
             <span className={css.menuItemBorder} />
@@ -134,6 +177,11 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
  * @param {boolean} props.showSearchForm
  * @param {boolean} props.showCreateListingsLink
  * @param {string} props.inboxTab
+ * @param {string?} props.viewMode 'customer' | 'provider' - which mode the account menu shows
+ * @param {boolean} props.showProviderModeSwitch whether this account is allowed a provider role
+ * @param {boolean} props.showCustomerModeSwitch whether this account is allowed a customer role
+ * @param {Function} props.onSwitchToProviderMode
+ * @param {Function} props.onSwitchToCustomerMode
  * @returns {JSX.Element} search icon
  */
 const TopbarDesktop = props => {
@@ -153,6 +201,11 @@ const TopbarDesktop = props => {
     showSearchForm,
     showCreateListingsLink,
     inboxTab,
+    viewMode,
+    showProviderModeSwitch,
+    showCustomerModeSwitch,
+    onSwitchToProviderMode,
+    onSwitchToCustomerMode,
   } = props;
   const [mounted, setMounted] = useState(false);
 
@@ -170,6 +223,14 @@ const TopbarDesktop = props => {
     ? showCreateListingsLink
     : showCreateListingLinkForUser(config, null);
 
+  // In Customer Mode, the "post a new listing" nav CTA is hidden - becoming/being a provider is
+  // handled entirely through the account menu's "Switch to Provider Mode" action instead, so the
+  // two modes don't show overlapping ways of doing the same thing. `viewMode` is null until it
+  // resolves client-side (see Topbar.js), and null is treated the same as "not customer mode" so
+  // this never disagrees with the hydration-safe value above on first paint.
+  const showCreateListingsLinkForCustomLinksMenu =
+    showCreateListingsLinkHydrationSafe && viewMode !== MODE_CUSTOMER;
+
   const giveSpaceForSearch = customLinks == null || customLinks?.length === 0;
   const classes = classNames(rootClassName || css.root, className);
 
@@ -182,7 +243,12 @@ const TopbarDesktop = props => {
       currentPage={currentPage}
       currentUser={currentUser}
       onLogout={onLogout}
-      showManageListingsLink={showCreateListingsLink}
+      showManageListingsLink={showCreateListingsLink && viewMode === MODE_PROVIDER}
+      viewMode={viewMode}
+      showProviderModeSwitch={showProviderModeSwitch}
+      showCustomerModeSwitch={showCustomerModeSwitch}
+      onSwitchToProviderMode={onSwitchToProviderMode}
+      onSwitchToCustomerMode={onSwitchToCustomerMode}
       intl={intl}
     />
   ) : null;
@@ -225,7 +291,7 @@ const TopbarDesktop = props => {
         customLinks={customLinks}
         intl={intl}
         hasClientSideContentReady={authenticatedOnClientSide || !isAuthenticatedOrJustHydrated}
-        showCreateListingsLink={showCreateListingsLinkHydrationSafe}
+        showCreateListingsLink={showCreateListingsLinkForCustomLinksMenu}
       />
 
       {inboxLinkMaybe}

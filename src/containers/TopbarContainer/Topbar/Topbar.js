@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 
 import appSettings from '../../../config/settings';
@@ -28,6 +28,7 @@ import TopbarDesktop from './TopbarDesktop/TopbarDesktop';
 
 import css from './Topbar.module.css';
 import { getCurrentUserTypeRoles, showCreateListingLinkForUser } from '../../../util/userHelpers';
+import { getViewMode, setViewMode, MODE_CUSTOMER, MODE_PROVIDER } from '../../../util/marketplaceMode';
 
 const MAX_MOBILE_SCREEN_WIDTH = 1024;
 
@@ -158,6 +159,15 @@ const TopbarComponent = props => {
     routeConfiguration,
   } = props;
 
+  // Which of Servio's two modes (Customer / Provider) the account menu currently presents. This
+  // starts out unresolved (null) so the very first client render matches the server-rendered
+  // markup, then resolves one tick later - the same hydration-safety pattern TopbarDesktop
+  // already uses for showCreateListingsLink below (see its own comment for why).
+  const [viewMode, setViewModeState] = useState(null);
+  useEffect(() => {
+    setViewModeState(getViewMode(currentUserHasListings));
+  }, [currentUserHasListings]);
+
   const handleSubmit = values => {
     const { currentSearchParams, history, location, config, routeConfiguration } = props;
 
@@ -206,6 +216,24 @@ const TopbarComponent = props => {
 
       console.log('logged out'); // eslint-disable-line
     });
+  };
+
+  // Switching TO Provider Mode reuses Servio's one existing "become a provider" / manage
+  // listings flow - it never creates a second provider account or a second onboarding system.
+  // If this person has already created a listing, they land straight in their existing
+  // dashboard (ManageListingsPage); otherwise they're sent into the existing first-listing
+  // onboarding flow (NewListingPage, which itself redirects into EditListingPage).
+  const handleSwitchToProviderMode = () => {
+    setViewMode(MODE_PROVIDER);
+    setViewModeState(MODE_PROVIDER);
+    const targetRoute = currentUserHasListings ? 'ManageListingsPage' : 'NewListingPage';
+    history.push(pathByRouteName(targetRoute, routeConfiguration));
+  };
+
+  const handleSwitchToCustomerMode = () => {
+    setViewMode(MODE_CUSTOMER);
+    setViewModeState(MODE_CUSTOMER);
+    history.push(pathByRouteName('LandingPage', routeConfiguration));
   };
 
   const showCreateListingsLink = showCreateListingLinkForUser(config, currentUser);
@@ -257,6 +285,11 @@ const TopbarComponent = props => {
       customLinks={customLinks}
       showCreateListingsLink={showCreateListingsLink}
       inboxTab={topbarInboxTab}
+      viewMode={viewMode}
+      showProviderModeSwitch={isProvider}
+      showCustomerModeSwitch={isCustomer}
+      onSwitchToProviderMode={handleSwitchToProviderMode}
+      onSwitchToCustomerMode={handleSwitchToCustomerMode}
     />
   );
 
@@ -383,6 +416,11 @@ const TopbarComponent = props => {
           showSearchForm={showSearchForm}
           showCreateListingsLink={showCreateListingsLink}
           inboxTab={topbarInboxTab}
+          viewMode={viewMode}
+          showProviderModeSwitch={isProvider}
+          showCustomerModeSwitch={isCustomer}
+          onSwitchToProviderMode={handleSwitchToProviderMode}
+          onSwitchToCustomerMode={handleSwitchToCustomerMode}
         />
       </div>
       <Modal

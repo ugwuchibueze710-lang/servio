@@ -134,6 +134,29 @@
   color: var(--marketplaceColorDark);
 }
 
+/* Mode-switch items ("Switch to Provider Mode" / "Switch to Customer Mode") render as buttons
+   (they change client-side state, not just navigate) inside an <li className={css.navigationLink}>
+   wrapper - exactly like the NamedLink-based items around them. This only resets browser button
+   chrome and inherits the wrapper's font/color/spacing, so it matches those items exactly instead
+   of doubling up the sizing/margin that .navigationLink already provides. */
+.modeSwitchButton {
+  display: block;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--marketplaceColorDark);
+    text-decoration: none;
+  }
+}
+
 .notificationBadge {
   position: absolute;
   top: 4px;

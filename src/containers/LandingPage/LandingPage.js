@@ -22,11 +22,25 @@ const PageBuilder = loadable(() =>
 export const LandingPageComponent = props => {
   const { pageAssetsData, inProgress, error } = props;
 
+  const landingPageData = pageAssetsData?.[camelize(ASSET_NAME)]?.data;
+
+  // Servio's homepage is a working marketplace, not a marketing site with a marketplace bolted
+  // on top of it: the hosted CMS "sections" for this page (the old "Why Choose Servio" / "For
+  // Customers" / "For Providers" / "How Servio Works" content) are intentionally not rendered
+  // here anymore. We still pass `meta` through untouched so page title/description/social-share
+  // tags keep working, and PageBuilder is still used as-is (unmodified) so the site's shared
+  // Topbar and Footer keep rendering exactly like they do on every other page - only the
+  // marketing body content in between them is suppressed. Nothing about the hosted asset itself
+  // changes; a marketplace operator could still re-enable it by rendering `sections` again here.
+  const landingPageDataWithoutMarketingSections = landingPageData
+    ? { ...landingPageData, sections: [] }
+    : landingPageData;
+
   return (
     <>
       <CategoryHero />
       <PageBuilder
-        pageAssetsData={pageAssetsData?.[camelize(ASSET_NAME)]?.data}
+        pageAssetsData={landingPageDataWithoutMarketingSections}
         inProgress={inProgress}
         error={error}
         fallbackPage={<FallbackPage error={error} />}

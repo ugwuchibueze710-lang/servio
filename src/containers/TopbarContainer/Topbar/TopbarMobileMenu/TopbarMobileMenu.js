@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import { ACCOUNT_SETTINGS_PAGES } from '../../../../routing/routeConfiguration';
 import { FormattedMessage } from '../../../../util/reactIntl';
 import { ensureCurrentUser } from '../../../../util/data';
+import { MODE_CUSTOMER, MODE_PROVIDER } from '../../../../util/marketplaceMode';
 
 import {
   AvatarLarge,
@@ -69,6 +70,11 @@ const CustomLinkComponent = ({ linkConfig, currentPage }) => {
  * @param {number} props.notificationCount
  * @param {Array<Object>} props.customLinks Contains object like { group, text, type, href, route }
  * @param {Function} props.onLogout
+ * @param {string?} props.viewMode 'customer' | 'provider' - which mode this menu currently shows
+ * @param {boolean} props.showProviderModeSwitch whether this account is allowed a provider role
+ * @param {boolean} props.showCustomerModeSwitch whether this account is allowed a customer role
+ * @param {Function} props.onSwitchToProviderMode
+ * @param {Function} props.onSwitchToCustomerMode
  * @returns {JSX.Element} search icon
  */
 const TopbarMobileMenu = props => {
@@ -81,6 +87,11 @@ const TopbarMobileMenu = props => {
     customLinks,
     onLogout,
     showCreateListingsLink,
+    viewMode,
+    showProviderModeSwitch,
+    showCustomerModeSwitch,
+    onSwitchToProviderMode,
+    onSwitchToCustomerMode,
   } = props;
 
   const user = ensureCurrentUser(currentUser);
@@ -154,13 +165,43 @@ const TopbarMobileMenu = props => {
     return currentPage === page || isAccountSettingsPage || isInboxPage ? css.currentPage : null;
   };
 
-  const manageListingsLinkMaybe = showCreateListingsLink ? (
+  // "Your listings" only makes sense while Provider Mode is active - in Customer Mode, becoming
+  // or returning to being a provider goes through the mode switch below instead, so the two
+  // modes don't show two different paths to the same place at once.
+  const manageListingsLinkMaybe = showCreateListingsLink && viewMode === MODE_PROVIDER ? (
     <li className={classNames(css.navigationLink, currentPageClass('ManageListingsPage'))}>
       <NamedLink name="ManageListingsPage">
         <FormattedMessage id="TopbarMobileMenu.yourListingsLink" />
       </NamedLink>
     </li>
   ) : null;
+
+  // Mode switching is mutually exclusive: only the switch INTO the mode that isn't currently
+  // active is ever shown, and only if the marketplace's role configuration allows that role for
+  // this account (see getCurrentUserTypeRoles in util/userHelpers.js).
+  const switchToProviderModeMaybe =
+    showProviderModeSwitch && viewMode === MODE_CUSTOMER ? (
+      <li className={css.navigationLink}>
+        <InlineTextButton rootClassName={css.modeSwitchButton} onClick={onSwitchToProviderMode}>
+          <FormattedMessage
+            id="TopbarMobileMenu.switchToProviderMode"
+            defaultMessage="Switch to Provider Mode"
+          />
+        </InlineTextButton>
+      </li>
+    ) : null;
+
+  const switchToCustomerModeMaybe =
+    showCustomerModeSwitch && viewMode === MODE_PROVIDER ? (
+      <li className={css.navigationLink}>
+        <InlineTextButton rootClassName={css.modeSwitchButton} onClick={onSwitchToCustomerMode}>
+          <FormattedMessage
+            id="TopbarMobileMenu.switchToCustomerMode"
+            defaultMessage="Switch to Customer Mode"
+          />
+        </InlineTextButton>
+      </li>
+    ) : null;
 
   return (
     <div className={css.root}>
@@ -191,6 +232,8 @@ const TopbarMobileMenu = props => {
               <FormattedMessage id="TopbarMobileMenu.accountSettingsLink" />
             </NamedLink>
           </li>
+          {switchToProviderModeMaybe}
+          {switchToCustomerModeMaybe}
           <li className={classNames(css.navigationLink, currentPageClass('RidePage'))}>
             <NamedLink name="RidePage">
               <FormattedMessage
