@@ -22,6 +22,8 @@ import RidePage from './RidePage/RidePage.duck';
 import DriverRidePage from './DriverRidePage/DriverRidePage.duck';
 import RidePageV2 from './RidePage/RidePageV2.duck';
 import DriverRidePageV2 from './DriverRidePage/DriverRidePageV2.duck';
+import ProviderProfilePageV2 from './ProviderProfilePageV2/ProviderProfilePageV2.duck';
+import ProviderSearchPageV2 from './ProviderSearchPageV2/ProviderSearchPageV2.duck';
 import SearchPage from './SearchPage/SearchPage.duck';
 import StripePayoutPage from './StripePayoutPage/StripePayoutPage.duck';
 import TransactionPage from './TransactionPage/TransactionPage.duck';
@@ -46,6 +48,8 @@ export {
   DriverRidePage,
   RidePageV2,
   DriverRidePageV2,
+  ProviderProfilePageV2,
+  ProviderSearchPageV2,
   SearchPage,
   StripePayoutPage,
   TransactionPage,

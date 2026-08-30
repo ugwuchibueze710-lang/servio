@@ -1,0 +1,66 @@
+.root {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.title {
+  margin-bottom: 12px;
+  text-transform: capitalize;
+}
+
+.nearMeButton {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: 1px solid #4a4a4a;
+  background: #fff;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.searchedNear {
+  color: #4a4a4a;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.errorText {
+  color: #b91c1c;
+}
+
+.resultsList {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resultCard {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.resultName {
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.resultRating {
+  color: #b7791f;
+  margin: 0 0 8px;
+}
+
+.resultBio {
+  margin: 0 0 8px;
+  color: #4a4a4a;
+}
+
+.resultDetail {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}

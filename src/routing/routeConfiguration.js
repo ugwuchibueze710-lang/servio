@@ -41,6 +41,12 @@ const RidePageV2 = loadable(() => import(/* webpackChunkName: "RidePageV2" */ '.
 const DriverRidePageV2 = loadable(() =>
   import(/* webpackChunkName: "DriverRidePageV2" */ '../containers/DriverRidePage/DriverRidePageV2')
 );
+const ProviderSearchPageV2 = loadable(() =>
+  import(/* webpackChunkName: "ProviderSearchPageV2" */ '../containers/ProviderSearchPageV2/ProviderSearchPageV2')
+);
+const ProviderProfilePageV2 = loadable(() =>
+  import(/* webpackChunkName: "ProviderProfilePageV2" */ '../containers/ProviderProfilePageV2/ProviderProfilePageV2')
+);
 const SearchPageWithMap = loadable(() => import(/* webpackChunkName: "SearchPageWithMap" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithMap'));
 const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPageWithGrid" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithGrid'));
 const ServiceCategoryPage = loadable(() => import(/* webpackChunkName: "ServiceCategoryPage" */ '../containers/ServiceCategoryPage/ServiceCategoryPage'));
@@ -290,6 +296,23 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       auth: true,
       authPage: 'LoginPage',
       component: DriverRidePageV2,
+    },
+
+    // New-backend provider profile (create/edit) and public search - Phase 3's still-missing
+    // frontend (backend has been built/tested since an earlier phase - see MIGRATION_PLAN.md).
+    // Not linked from anywhere in the live UI yet; reached only by navigating to these paths
+    // directly, same "parallel, unlinked route" pattern as /ride-v2 and /drive-v2 above.
+    {
+      path: '/provider-profile-v2',
+      name: 'ProviderProfilePageV2',
+      auth: true,
+      authPage: 'LoginPage',
+      component: ProviderProfilePageV2,
+    },
+    {
+      path: '/providers-v2/:categorySlug',
+      name: 'ProviderSearchPageV2',
+      component: ProviderSearchPageV2,
     },
 
     // Note: authenticating with IdP (e.g. Facebook) expects that /login path exists

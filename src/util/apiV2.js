@@ -117,5 +117,16 @@ export const apiV2 = (path, options = {}) => {
     });
 };
 
+/**
+ * Unauthenticated /api/v2 call - for the routes that are genuinely public (GET /api/v2/
+ * categories, GET /api/v2/search/providers - see server/apiRouter.js, neither is behind
+ * requireAuth). Never bridges for a token: a logged-out visitor browsing provider search
+ * results shouldn't be forced through a Sharetribe-login-then-bridge round trip just to see a
+ * public list. Using apiV2() (the authenticated helper) against one of these still works, but
+ * needlessly requires a Sharetribe session - use this one for anything requireAuth doesn't
+ * gate.
+ */
+export const apiV2Public = (path, options = {}) => jsonRequest(path, options);
+
 /** Same error shape every other duck.js in this app already expects from a caught API error. */
 export const storableApiV2Error = err => storableError(err);

@@ -56,12 +56,13 @@ entirely.
   that category yet. An unknown category slug is a real 404, not a silently-empty 200. 15
   automated checks covered profile creation/validation/uniqueness and all three empty vs.
   populated search states - see "How Phase 2 was tested" below (same method, same caveat about
-  this sandbox's MongoDB access). **Not yet done: the frontend doesn't call any of this.**
-  Category tiles on the homepage still route to Sharetribe's own `SearchPage`
-  (`pub_categoryLevel1` filter against Sharetribe listings) - swapping that for this new endpoint
-  is Phase 9 work, deliberately deferred so today's live search (which does work end-to-end on
-  Sharetribe right now) isn't put at risk until the new path has a live database backing it and a
-  provider profile UI (also Phase 9) for people to actually register through.
+  this sandbox's MongoDB access). **A parallel, unlinked frontend for this now exists** -
+  `/provider-profile-v2` (create/edit) and `/providers-v2/:categorySlug` (public search) - see
+  the "Phase 9 - Provider profile + search frontend built" entry below for what it does and what
+  it doesn't. Category tiles on the homepage still route to Sharetribe's own `SearchPage`
+  (`pub_categoryLevel1` filter against Sharetribe listings); swapping that live path over to
+  this one, and linking these new routes from anywhere in the UI, is still deferred Phase 9 work
+  until there's been a real end-to-end run against a live database.
 - **Phase 4 - DONE (this change).** The real booking lifecycle, enforced by
   `server/utils/bookingStateMachine.js` rather than trusting whatever status the client sends:
   `POST /api/v2/bookings` (a customer's request - rejected if the business doesn't exist, is
@@ -284,6 +285,42 @@ entirely.
     `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` configured for real, one rider account and one
     driver account, and an actual walk through request → match → accept → arrive → start →
     complete → pay.
+- **Phase 9 - Provider profile + search frontend built, NOT linked anywhere (this change).**
+  The other half of Phase 3 that had zero frontend consumer until now, built with the same
+  parallel-route caution as the Ride rewire above - nothing existing was touched, and there was
+  technically nothing live to protect here since no page ever called these endpoints before.
+  - `src/util/apiV2.js` gained `apiV2Public()` - an unauthenticated variant of the existing
+    `apiV2()` helper, for the two routes that are genuinely public in `server/apiRouter.js`
+    (`GET /api/v2/categories`, `GET /api/v2/search/providers`). Using the authenticated helper
+    against these would still work, but would needlessly force a logged-out visitor through a
+    Sharetribe-login-then-bridge round trip just to browse a public list.
+  - `/provider-profile-v2` (`ProviderProfilePageV2.duck.js`/`.js`) - a real create/edit form:
+    name, description (20+ characters, matching the backend's own validation), a category
+    checklist sourced live from `GET /api/v2/categories` (never a hand-typed, potentially-stale
+    list) and filtered to exclude the Ride category (Ride uses a separate `Driver`
+    onboarding flow, not `Business` - offering it here would be a checkbox that does nothing),
+    service area label/radius, an actual "use my current location" button
+    (`src/util/maps.js`'s `userLocation()` - real geolocation, not a fake default), contact
+    phone, and pricing/availability notes. Loads any existing profile via `GET
+    /api/v2/providers/me` and populates the form for editing when one exists; a genuinely new
+    provider sees a genuinely empty form. Saves via the same real, tested `POST
+    /api/v2/providers/me` from Phase 3.
+  - `/providers-v2/:categorySlug` (`ProviderSearchPageV2.duck.js`/`.js`) - calls the real `GET
+    /api/v2/search/providers`, with an opt-in "search near me" button (declined/unavailable
+    geolocation just falls back to the category-wide, rating-sorted list rather than a fake
+    location). An unknown category slug surfaces the backend's real 404 as a real "no such
+    category" message, not a silent empty list. A real empty result set says so plainly rather
+    than showing placeholder providers.
+  - **Known, disclosed gaps, left open rather than faked**: no image/portfolio upload UI (the
+    backend has no endpoint for it yet either); nothing links to either of these two routes from
+    anywhere in the live UI - reaching them means typing the URL directly; no booking-request UI
+    sits on top of a provider's profile yet (that's Phase 4's frontend, also still pending - see
+    the Phase 4 entry above); and the same sandbox limitation as the Ride rewire applies - no
+    real MongoDB/network access here, so verification was a `@babel/parser` syntax check on
+    every new file plus a manual, field-by-field trace of every action/reducer against the exact
+    JSON shapes `providers/me`, `search/providers`, and `categories` actually return (read
+    directly from their handler source, not assumed). A real end-to-end run against a live
+    database is still needed before linking these anywhere.
 - **Phase 9 - Frontend rewire**, ongoing throughout: remove `sharetribe-flex-sdk` calls from each
   `*.duck.js` file as its backing phase lands; this is the biggest single piece of work by file
   count.
