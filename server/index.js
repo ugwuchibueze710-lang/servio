@@ -3,12 +3,23 @@
  *
  * REWRITTEN to drop Sharetribe entirely:
  *  - No more MANDATORY_ENV_VARIABLES check on Sharetribe SDK credentials at boot.
- *  - No more custom server-side rendering pipeline (dataLoader/renderer/sdkUtils), which
- *    used to call the Sharetribe SDK on every single page request. That coupling is exactly
- *    what made the whole site crash/500 the moment Sharetribe credentials were removed.
- *  - Instead: a plain static file server that serves the React build as a client-rendered
- *    single-page app. The already-working /v2/* Mongo/Stripe backend (server/apiRouter.js)
- *    is untouched and mounted exactly as before at /api.
+ *  - No more custom server-side RENDERING pipeline (no more calling the Sharetribe SDK or
+ *    React's renderToString on every page request - that coupling is exactly what made the
+ *    whole site crash/500 the moment Sharetribe credentials were removed).
+ *  - Instead: a plain client-rendered single-page app. The already-working /v2/* Mongo/Stripe
+ *    backend (server/apiRouter.js) is untouched and mounted exactly as before at /api.
+ *
+ * IMPORTANT - do not confuse "no SSR" with "serve build/index.html raw": that was a real,
+ * severe bug (caused a total blank-page outage). build/index.html is not a plain static file -
+ * it is a template (see public/index.html) with `<!--!ssrScripts-->` / `<!--!ssrLinks-->` /
+ * `<!--!ssrStyles-->` HTML-comment placeholders that MUST be substituted with the actual
+ * `<script>`/`<link>`/`<style>` tags for the built JS/CSS bundles before being sent to a
+ * browser - otherwise the page has no script tag at all and nothing ever loads. The original
+ * codebase's server/renderer.js (deleted along with the rest of the SSR pipeline) filled these
+ * in via @loadable/server's ChunkExtractor as part of full SSR; renderIndexHtml() below does
+ * the same chunk-tag substitution WITHOUT any SSR - no Sharetribe SDK call, no React
+ * renderToString, just "what scripts/styles does the built app need to boot" - exactly the
+ * same thing renderer.js did in its own `PREVENT_DATA_LOADING_IN_SSR` fallback path.
  *
  * Trade-off: no more server-side rendering (worse for SEO / first paint) until we build a
  * real replacement. Given the goal is "kill Sharetribe now, rebuild clean," this is the
@@ -32,11 +43,14 @@ const enforceSsl = require('express-enforces-ssl');
 const path = require('path');
 const passport = require('passport');
 
+const _ = require('lodash');
+
 const auth = require('./auth');
 const apiRouter = require('./apiRouter');
 const robotsTxtRoute = require('./resources/robotsTxt');
 const sitemapResourceRoute = require('./resources/sitemap');
 const { generateCSPNonce, csp } = require('./csp');
+const { ChunkExtractor } = require('@loadable/server');
 
 const buildPath = path.resolve(__dirname, '..', 'build');
 const dev = process.env.REACT_APP_ENV === 'development';
@@ -69,6 +83,75 @@ const app = express();
 const errorPage500 = fs.readFileSync(path.join(buildPath, '500.html'), 'utf-8');
 const errorPage404 = fs.readFileSync(path.join(buildPath, '404.html'), 'utf-8');
 const indexHtmlPath = path.join(buildPath, 'index.html');
+const rawIndexHtml = fs.readFileSync(indexHtmlPath, 'utf-8');
+
+// Fill in build/index.html's `<!--!xxx-->` template placeholders (see the file header comment
+// above for why this step is required, not optional). This mirrors server/renderer.js's own
+// `template()` helper from the old SSR pipeline exactly, so the substitution syntax stays in
+// sync with public/index.html - just without any Sharetribe/React rendering behind it.
+const reNoMatch = /($^)/;
+const templateWithHtmlAttributes = _.template(rawIndexHtml, {
+  // <html data-htmlattr="htmlAttributes"> - substituted separately from the <!--!xxx--> tags
+  // below because it lives inside a real HTML attribute, not a comment.
+  interpolate: /data-htmlattr="([\s\S]+?)"/g,
+  evaluate: reNoMatch,
+  escape: reNoMatch,
+});
+const templateTags = templatedWithHtmlAttributes =>
+  _.template(templatedWithHtmlAttributes, {
+    // <!--!variableName--> placeholders - HTML comments so the raw file stays valid, inert HTML
+    // even before substitution.
+    interpolate: /<!--!([\s\S]+?)-->/g,
+    evaluate: reNoMatch,
+    escape: reNoMatch,
+  });
+const fillIndexHtmlTemplate = params => {
+  const { htmlAttributes, ...tags } = params || {};
+  const templated = templateWithHtmlAttributes({ htmlAttributes });
+  return templateTags(templated)(tags);
+};
+
+// Built once at startup (the build output doesn't change while the process is running - same
+// assumption errorPage500/errorPage404 above already make). No SSR happens here: htmlAttributes/
+// title/link/meta/script/preloadedStateScript/body are all left empty on purpose, so the client
+// always does a plain client-side render (src/index.js only calls hydrateRoot when
+// window.__PRELOADED_STATE__ is present, which it never is here) rather than mismatching a
+// hydration that never happened.
+// Constructed directly (rather than via server/importer.js's getExtractors(), which also
+// builds a "node" extractor off build/node/loadable-stats.json) so a missing/irrelevant node
+// stats file - a leftover of the old SSR build - can never take down the one extractor this
+// file actually needs.
+let webExtractor = null;
+try {
+  webExtractor = new ChunkExtractor({
+    statsFile: path.join(buildPath, 'loadable-stats.json'),
+    outputPath: buildPath,
+  });
+} catch (e) {
+  log.error(e, 'loadable-web-extractor-init-failed');
+}
+
+const renderIndexHtml = nonce => {
+  if (!webExtractor) {
+    // No extractor (e.g. build/loadable-stats.json missing) - fall back to the raw file rather
+    // than crashing. Not ideal (no script tags will be filled in), but strictly no worse than
+    // before this fix, and the error above makes the real cause visible in the logs.
+    return rawIndexHtml;
+  }
+  const nonceParamMaybe = nonce ? { nonce } : {};
+  return fillIndexHtmlTemplate({
+    htmlAttributes: '',
+    title: '',
+    link: '',
+    meta: '',
+    script: '',
+    preloadedStateScript: '',
+    ssrStyles: webExtractor.getStyleTags(),
+    ssrLinks: webExtractor.getLinkTags(),
+    ssrScripts: webExtractor.getScriptTags(nonceParamMaybe),
+    body: '',
+  });
+};
 
 // Filter out bot requests scanning for php/wp vulnerabilities.
 app.use(
@@ -170,13 +253,13 @@ app.get('/{*splat}', (req, res) => {
 
   res.set(noCacheHeaders);
 
-  fs.readFile(indexHtmlPath, 'utf-8', (err, html) => {
-    if (err) {
-      log.error(err, 'index-html-read-failed');
-      return res.status(500).send(errorPage500);
-    }
+  try {
+    const html = renderIndexHtml(cspEnabled ? res.locals.cspNonce : null);
     return res.status(200).send(html);
-  });
+  } catch (e) {
+    log.error(e, 'index-html-render-failed');
+    return res.status(500).send(errorPage500);
+  }
 });
 
 log.setupExpressErrorHandler(app);
