@@ -1,6 +1,8 @@
 @import '../../../../styles/customMediaQueries.css';
 
 /* Desktop */
+/* A crisp hairline instead of a soft drop shadow - reads as an intentional, thin editorial rule
+   under the header rather than a generic "floating card" shadow. */
 .root {
   /* Size */
   width: 100%;
@@ -16,8 +18,9 @@
   /* fill */
   background-color: var(--colorWhite);
 
-  /* shadows */
-  box-shadow: var(--boxShadowLight);
+  /* A single, deliberate hairline instead of a soft box-shadow */
+  box-shadow: none;
+  border-bottom: 1px solid var(--colorGrey100);
 
   @media (--viewportLarge) {
     padding: 0 24px 0 0;
@@ -121,6 +124,14 @@
   margin: 28px 0;
   text-decoration: inherit;
   position: relative;
+}
+
+/* <ModeBadge>, shown directly in the nav (next to Inbox/the avatar) - part of the header's own
+   identity rather than something hidden inside the account dropdown. */
+.navModeBadge {
+  flex-shrink: 0;
+  align-self: center;
+  margin: 0 4px 0 4px;
 }
 
 .notificationDot {

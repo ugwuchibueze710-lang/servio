@@ -52,8 +52,10 @@
   /* fill */
   background-color: var(--colorWhite);
 
-  /* shadows */
-  box-shadow: var(--boxShadow);
+  /* A single, deliberate hairline instead of a soft box-shadow - consistent with the desktop
+     header's own treatment (see TopbarDesktop.module.css .root). */
+  box-shadow: none;
+  border-bottom: 1px solid var(--colorGrey100);
 
   @media (--viewportMedium) {
     height: var(--topbarHeightDesktop);

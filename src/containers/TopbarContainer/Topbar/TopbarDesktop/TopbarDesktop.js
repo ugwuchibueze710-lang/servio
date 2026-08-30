@@ -242,6 +242,13 @@ const TopbarDesktop = props => {
     <InboxLink notificationCount={notificationCount} inboxTab={inboxTab} />
   ) : null;
 
+  // Named directly in the nav (not just tucked inside the account dropdown) so which mode is
+  // active is visible at a glance, as part of the header's own identity - not something you have
+  // to open a menu to find out.
+  const modeBadgeMaybe = authenticatedOnClientSide ? (
+    <ModeBadge viewMode={viewMode} className={css.navModeBadge} />
+  ) : null;
+
   const profileMenuMaybe = authenticatedOnClientSide ? (
     <ProfileMenu
       currentPage={currentPage}
@@ -299,6 +306,7 @@ const TopbarDesktop = props => {
       />
 
       {inboxLinkMaybe}
+      {modeBadgeMaybe}
       {profileMenuMaybe}
       {signupLinkMaybe}
       {loginLinkMaybe}

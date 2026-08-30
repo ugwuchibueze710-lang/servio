@@ -234,108 +234,134 @@ const CategoryHero = () => {
   };
 
   return (
-    <div className={css.root}>
-      <div className={css.locationBar}>
-        {isLocationLocked ? (
-          <div className={css.locationLocked}>
-            <IconCheckmark size="small" className={css.locationLockedIcon} />
-            <span className={css.locationLockedText} title={location.search}>
-              {location.search}
-            </span>
-            <button
-              type="button"
-              className={css.locationChangeButton}
-              onClick={handleChangeLocationClick}
-            >
-              Change
-            </button>
-            <button
-              type="button"
-              className={css.locationClearButton}
-              onClick={handleClearLocation}
-              aria-label="Clear location"
-              title="Clear location"
-            >
-              &times;
-            </button>
+    <div className={css.canvas}>
+      {/* Purely decorative, absolutely-positioned soft color field behind the hero surface - it
+          creates spatial depth against the tinted canvas without touching any interactive
+          element or the category grid below. */}
+      <div className={css.canvasGlow} aria-hidden="true" />
+
+      <div className={css.canvasInner}>
+        {/* The hero "surface" is a single elevated panel - location + headline live together on
+            one card that sits above the tinted canvas, instead of being loose text floating on a
+            flat page. Nothing about the location control or its behavior changes below. */}
+        <div className={css.heroSurface}>
+          <div className={css.locationBar}>
+            {isLocationLocked ? (
+              <div className={css.locationLocked}>
+                <IconCheckmark size="small" className={css.locationLockedIcon} />
+                <span className={css.locationLockedText} title={location.search}>
+                  {location.search}
+                </span>
+                <button
+                  type="button"
+                  className={css.locationChangeButton}
+                  onClick={handleChangeLocationClick}
+                >
+                  Change
+                </button>
+                <button
+                  type="button"
+                  className={css.locationClearButton}
+                  onClick={handleClearLocation}
+                  aria-label="Clear location"
+                  title="Clear location"
+                >
+                  &times;
+                </button>
+              </div>
+            ) : (
+              <LocationAutocompleteInput
+                className={css.locationInput}
+                iconClassName={css.locationInputIconBox}
+                inputClassName={css.locationInputField}
+                predictionsClassName={css.locationPredictions}
+                CustomIcon={LocationPinIcon}
+                useDarkText={true}
+                autoFocus={isEditingLocation}
+                placeholder={intl.formatMessage({ id: 'PageBuilder.SearchCTA.locationPlaceholder' })}
+                closeOnBlur={true}
+                input={{
+                  name: 'category-hero-location',
+                  value: location,
+                  onChange: handleLocationChange,
+                  onBlur: () => {},
+                  onFocus: () => {},
+                }}
+                meta={{}}
+              />
+            )}
           </div>
-        ) : (
-          <LocationAutocompleteInput
-            className={css.locationInput}
-            iconClassName={css.locationInputIconBox}
-            inputClassName={css.locationInputField}
-            predictionsClassName={css.locationPredictions}
-            CustomIcon={LocationPinIcon}
-            useDarkText={true}
-            autoFocus={isEditingLocation}
-            placeholder={intl.formatMessage({ id: 'PageBuilder.SearchCTA.locationPlaceholder' })}
-            closeOnBlur={true}
-            input={{
-              name: 'category-hero-location',
-              value: location,
-              onChange: handleLocationChange,
-              onBlur: () => {},
-              onFocus: () => {},
-            }}
-            meta={{}}
-          />
-        )}
-      </div>
 
-      {/* One-time entrance fade for the headline block only - the location bar above and the
-          category search/grid below are untouched, so nothing about how the categories look or
-          behave changes. */}
-      <BlurFade direction="up" duration={0.45}>
-        <span className={css.titleAccent} aria-hidden="true" />
-        <h1 className={css.title}>What service do you need?</h1>
-        <p className={css.subtitle}>
-          {isLocationLocked ? (
-            <>
-              Showing categories near <strong>{location.search}</strong> - tap one to see
-              who&apos;s available.
-            </>
-          ) : (
-            <>
-              Every category below is live and searchable. Set your location above, then tap a
-              category to see who&apos;s available near you - if nobody has signed up yet in your
-              area, you&apos;ll see that too.
-            </>
-          )}
-        </p>
-      </BlurFade>
+          {/* One-time entrance fade for the headline block only - the location control above and
+              the category search/grid below are untouched, so nothing about how the categories
+              look or behave changes. */}
+          <BlurFade direction="up" duration={0.5}>
+            <span className={css.kicker}>Local services, on demand</span>
+            <span className={css.titleAccent} aria-hidden="true" />
+            <h1 className={css.title}>What service do you need?</h1>
+            <p className={css.subtitle}>
+              {isLocationLocked ? (
+                <>
+                  Showing categories near <strong>{location.search}</strong> - tap one to see
+                  who&apos;s available.
+                </>
+              ) : (
+                <>
+                  Every category below is live and searchable. Set your location above, then tap a
+                  category to see who&apos;s available near you - if nobody has signed up yet in
+                  your area, you&apos;ll see that too.
+                </>
+              )}
+            </p>
+          </BlurFade>
+        </div>
 
-      <div className={css.categorySearch}>
-        <IconSearch className={css.categorySearchIcon} />
-        <input
-          type="text"
-          className={css.categorySearchInput}
-          placeholder="Search for another type of service..."
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-        />
-      </div>
+        {/* The category section gets its own quiet "chapter heading" so it reads as a distinct
+            part of the composition rather than a continuation of the hero card. Everything from
+            the search box down - including the grid, tiles and images - is byte-for-byte the
+            same JSX as before this redesign. */}
+        <div className={css.categorySection}>
+          <BlurFade direction="up" duration={0.4} delay={0.08}>
+            <div className={css.categorySectionHeader}>
+              <span className={css.sectionRule} aria-hidden="true" />
+              <span className={css.sectionKicker}>Browse categories</span>
+            </div>
+          </BlurFade>
 
-      <div className={css.grid}>
-        {visibleCategories.map(category => (
-          <button
-            key={category.id}
-            type="button"
-            className={css.tile}
-            onClick={() => goToCategory(category)}
-          >
-            <img
-              className={css.tileImage}
-              src={getCategoryImage(category)}
-              alt={category.name}
+          <div className={css.categorySearch}>
+            <IconSearch className={css.categorySearchIcon} />
+            <input
+              type="text"
+              className={css.categorySearchInput}
+              placeholder="Search for another type of service..."
+              value={query}
+              onChange={e => setQuery(e.target.value)}
             />
-            <span className={css.tileLabel}>{category.name}</span>
-          </button>
-        ))}
-        {visibleCategories.length === 0 ? (
-          <p className={css.noMatches}>
-            No category matches &quot;{query}&quot; yet - try a different search term.
-          </p>
-        ) : null}
+          </div>
+
+          <div className={css.grid}>
+            {visibleCategories.map(category => (
+              <button
+                key={category.id}
+                type="button"
+                className={css.tile}
+                onClick={() => goToCategory(category)}
+              >
+                <img
+                  className={css.tileImage}
+                  src={getCategoryImage(category)}
+                  alt={category.name}
+                />
+                <span className={css.tileLabel}>{category.name}</span>
+              </button>
+            ))}
+            {visibleCategories.length === 0 ? (
+              <p className={css.noMatches}>
+                No category matches &quot;{query}&quot; yet - try a different search term.
+              </p>
+            ) : null}
+          </div>
+        </div>
       </div>
     </div>
   );

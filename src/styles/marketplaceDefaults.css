@@ -1294,6 +1294,68 @@ textarea {
   color: var(--colorWhite);
 }
 
+/* ================ Button hover shimmer ================ */
+
+/**
+ * A single, restrained light-sweep across a button on hover/focus - not a looping animation, just
+ * a one-time diagonal highlight that reinforces "this is interactive". Applied to every shared
+ * button class so buttons feel consistently polished app-wide, without a single extra element or
+ * any JS: it's a ::after pseudo-element whose position is what transitions.
+ */
+.buttonDefault,
+.buttonPrimary,
+.buttonPrimaryInline,
+.buttonSecondary,
+.buttonSecondaryInline,
+.buttonSmall {
+  position: relative;
+  overflow: hidden;
+}
+
+.buttonDefault::after,
+.buttonPrimary::after,
+.buttonPrimaryInline::after,
+.buttonSecondary::after,
+.buttonSecondaryInline::after,
+.buttonSmall::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(115deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  transition: left 0.5s ease;
+}
+
+.buttonDefault:hover::after,
+.buttonDefault:focus::after,
+.buttonPrimary:hover::after,
+.buttonPrimary:focus::after,
+.buttonPrimaryInline:hover::after,
+.buttonPrimaryInline:focus::after,
+.buttonSecondary:hover::after,
+.buttonSecondary:focus::after,
+.buttonSecondaryInline:hover::after,
+.buttonSecondaryInline:focus::after,
+.buttonSmall:hover::after,
+.buttonSmall:focus::after {
+  left: 120%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .buttonDefault::after,
+  .buttonPrimary::after,
+  .buttonPrimaryInline::after,
+  .buttonSecondary::after,
+  .buttonSecondaryInline::after,
+  .buttonSmall::after {
+    display: none;
+  }
+}
+
 /* ================ Modals ================ */
 
 .marketplaceModalRootStyles {
