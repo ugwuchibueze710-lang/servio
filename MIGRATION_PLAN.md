@@ -118,7 +118,17 @@ entirely.
   from customers) - that's a separate, larger integration (Connect account onboarding, payout
   scheduling) deferred to when there's a real provider/driver base to pay out to. Also not yet
   wired to any frontend checkout screen - same Phase 9 reasoning as the rest.
-- **Phase 7 - Reviews**, tied to completed `Booking`/`RideRequest` documents only (section 20).
+- **Phase 7 - DONE (this change).** Reviews tied only to completed transactions - the actual
+  point of spec section 20, not just a schema field: `POST /api/v2/reviews/bookings/:id` and
+  `POST /api/v2/reviews/rides/:id` both re-check server-side that the transaction is really
+  `completed`/`trip_completed` and belongs to the reviewing customer, and both reject a second
+  review of the same transaction. `Business.ratingAvg`/`ratingCount` and `Driver.ratingAvg`/
+  `ratingCount` are recomputed from the real review documents after every write (a MongoDB
+  aggregate, not a hand-incremented counter that could drift), and `GET /api/v2/reviews/business/
+  :businessId` / `GET /api/v2/reviews/driver/:driverId` are real, honestly-empty-until-reviewed
+  public lists. 11 automated checks covered all of this, including that a second review produces
+  a genuinely recomputed average rather than a hardcoded number - see "How Phase 2 was tested"
+  below.
 - **Phase 8 - Admin CRUD** for categories/users/providers/drivers/bookings/rides (section 23),
   replacing manual `seedCategories.js` runs.
 - **Phase 9 - Frontend rewire**, ongoing throughout: remove `sharetribe-flex-sdk` calls from each
