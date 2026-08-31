@@ -12,6 +12,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import TopbarContainer from '../TopbarContainer/TopbarContainer';
 
 import BookingPaymentForm from '../../components/BookingPaymentForm/BookingPaymentForm';
 import PhotoUploader from '../../components/PhotoUploader/PhotoUploader';
@@ -77,10 +78,20 @@ const ProjectPassportPageV2 = props => {
   }, [dispatch, bookingId]);
 
   if (page.fetchInProgress && !page.booking) {
-    return <div className={css.root}><p>Loading…</p></div>;
+    return (
+      <>
+        <TopbarContainer currentPage="ProjectPassportPageV2" />
+        <div className={css.root}><p>Loading…</p></div>
+      </>
+    );
   }
   if (page.fetchError || !page.booking) {
-    return <div className={css.root}><p className={css.errorText}>This request could not be found.</p></div>;
+    return (
+      <>
+        <TopbarContainer currentPage="ProjectPassportPageV2" />
+        <div className={css.root}><p className={css.errorText}>This request could not be found.</p></div>
+      </>
+    );
   }
 
   const { booking, viewerRole } = page;
@@ -149,7 +160,9 @@ const ProjectPassportPageV2 = props => {
   const canReview = isCustomer && ['confirmed', 'paid_out'].includes(booking.status) && !page.reviewSubmitted;
 
   return (
-    <div className={css.root}>
+    <>
+      <TopbarContainer currentPage="ProjectPassportPageV2" />
+      <div className={css.root}>
       <Link to={isProvider ? '/provider-inbox-v2' : '/my-bookings-v2'} className={css.backLink}>
         ← Back
       </Link>
@@ -396,6 +409,7 @@ const ProjectPassportPageV2 = props => {
         </form>
       </section>
     </div>
+    </>
   );
 };
 

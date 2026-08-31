@@ -12,6 +12,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
+import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import LocationControl from '../../components/LocationControl/LocationControl';
 import SmartSearchBox from '../../components/SmartSearchBox/SmartSearchBox';
 import useCustomerLocation from '../../hooks/useCustomerLocation';
@@ -99,7 +100,9 @@ const ProviderSearchPageV2 = props => {
   );
 
   return (
-    <div className={css.root}>
+    <>
+      <TopbarContainer currentPage="ProviderSearchPageV2" />
+      <div className={css.root}>
       <div className={css.searchHeader}>
         <SmartSearchBox location={location} onResult={handleSmartSearchResult} />
         {navMessage && <p className={css.navMessage}>{navMessage}</p>}
@@ -188,6 +191,7 @@ const ProviderSearchPageV2 = props => {
         ))}
       </ul>
     </div>
+    </>
   );
 };
 

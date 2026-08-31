@@ -8,6 +8,7 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Link, useHistory, useLocation } from 'react-router-dom';
+import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { fetchMyBookingsV2Thunk, fetchSavedProvidersV2Thunk, unsaveProviderV2Thunk } from './MyBookingsPageV2.duck';
@@ -57,7 +58,9 @@ const MyBookingsPageV2 = () => {
   const past = page.data.filter(b => !ACTIVE_STATUSES.includes(b.status));
 
   return (
-    <div className={css.root}>
+    <>
+      <TopbarContainer currentPage="MyBookingsPageV2" />
+      <div className={css.root}>
       <h1 className={css.title}>My requests</h1>
 
       <div className={css.tabs}>
@@ -149,6 +152,7 @@ const MyBookingsPageV2 = () => {
         </>
       )}
     </div>
+    </>
   );
 };
 

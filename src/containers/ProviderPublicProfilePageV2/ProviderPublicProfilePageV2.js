@@ -10,6 +10,8 @@
  */
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+
+import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { apiV2, hasAppUserToken } from '../../util/apiV2';
@@ -64,20 +66,30 @@ const ProviderPublicProfilePageV2 = props => {
   };
 
   if (page.fetchInProgress) {
-    return <div className={css.root}><p>Loading…</p></div>;
+    return (
+      <>
+        <TopbarContainer currentPage="ProviderPublicProfilePageV2" />
+        <div className={css.root}><p>Loading…</p></div>
+      </>
+    );
   }
   if (page.fetchError || !page.business) {
     return (
-      <div className={css.root}>
-        <p className={css.errorText}>This provider could not be found.</p>
-      </div>
+      <>
+        <TopbarContainer currentPage="ProviderPublicProfilePageV2" />
+        <div className={css.root}>
+          <p className={css.errorText}>This provider could not be found.</p>
+        </div>
+      </>
     );
   }
 
   const { business, reviews } = page;
 
   return (
-    <div className={css.root}>
+    <>
+      <TopbarContainer currentPage="ProviderPublicProfilePageV2" />
+      <div className={css.root}>
       <div className={css.header}>
         <div className={css.headerMain}>
           {business.profileImageUrl && (
@@ -169,6 +181,7 @@ const ProviderPublicProfilePageV2 = props => {
         )}
       </section>
     </div>
+    </>
   );
 };
 

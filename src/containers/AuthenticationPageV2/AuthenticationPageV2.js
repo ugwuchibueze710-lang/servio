@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import { NamedLink, PrimaryButton } from '../../components';
+import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import { hasAppUserToken } from '../../util/apiV2';
 import { signUpThunk, logInThunk, clearAuthError } from './AuthenticationPageV2.duck';
 
@@ -54,7 +55,7 @@ const AuthenticationPageV2 = props => {
 
   const redirectAfterAuth = () => {
     const returnTo = params.get('returnTo');
-    history.push(returnTo || '/providers-v2/home-cleaning');
+    history.push(returnTo || '/');
   };
 
   const handleSubmit = e => {
@@ -93,7 +94,9 @@ const AuthenticationPageV2 = props => {
 
   if (page.user || hasAppUserToken()) {
     return (
-      <div className={css.root}>
+      <>
+        <TopbarContainer currentPage="AuthenticationPageV2" />
+        <div className={css.root}>
         <div className={css.card}>
           <h1 className={css.heading}>You&apos;re signed in</h1>
           {page.user && (
@@ -102,7 +105,7 @@ const AuthenticationPageV2 = props => {
             </p>
           )}
           <div className={css.actions}>
-            <NamedLink name="ProviderSearchPageV2" params={{ categorySlug: 'home-cleaning' }} className={css.primaryLink}>
+            <NamedLink name="ProviderSearchPageV2" params={{ categorySlug: 'cleaning' }} className={css.primaryLink}>
               Browse services
             </NamedLink>
             <NamedLink name="MyBookingsPageV2" className={css.secondaryLink}>
@@ -110,14 +113,17 @@ const AuthenticationPageV2 = props => {
             </NamedLink>
           </div>
         </div>
-      </div>
+        </div>
+      </>
     );
   }
 
   const apiError = page.submitError?.message;
 
   return (
-    <div className={css.root}>
+    <>
+      <TopbarContainer currentPage="AuthenticationPageV2" />
+      <div className={css.root}>
       <div className={css.card}>
         <div className={css.tabs}>
           <button
@@ -190,6 +196,7 @@ const AuthenticationPageV2 = props => {
         </p>
       </div>
     </div>
+    </>
   );
 };
 

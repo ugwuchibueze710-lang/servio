@@ -13,6 +13,7 @@ import { useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { NamedLink } from '../../components';
+import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import LocationControl from '../../components/LocationControl/LocationControl';
 import PhotoUploader from '../../components/PhotoUploader/PhotoUploader';
 import { hasAppUserToken } from '../../util/apiV2';
@@ -196,22 +197,32 @@ const ProviderProfilePageV2 = () => {
   };
 
   if (signedIn === null) {
-    return <div className={css.root} />;
+    return (
+      <>
+        <TopbarContainer currentPage="ProviderProfilePageV2" />
+        <div className={css.root} />
+      </>
+    );
   }
 
   if (!signedIn) {
     return (
-      <div className={css.root}>
-        <h1 className={css.title}>Set up your provider profile</h1>
-        <p className={css.errorText}>
-          You need to sign in first. <NamedLink name="AuthenticationPageV2">Sign in</NamedLink>
-        </p>
-      </div>
+      <>
+        <TopbarContainer currentPage="ProviderProfilePageV2" />
+        <div className={css.root}>
+          <h1 className={css.title}>Set up your provider profile</h1>
+          <p className={css.errorText}>
+            You need to sign in first. <NamedLink name="AuthenticationPageV2">Sign in</NamedLink>
+          </p>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className={css.root}>
+    <>
+      <TopbarContainer currentPage="ProviderProfilePageV2" />
+      <div className={css.root}>
       <h1 className={css.title}>{page.business ? 'Edit your provider profile' : 'Set up your provider profile'}</h1>
 
       {page.savedJustNow && <p className={css.successText}>Saved.</p>}
@@ -342,6 +353,7 @@ const ProviderProfilePageV2 = () => {
         </section>
       )}
     </div>
+    </>
   );
 };
 

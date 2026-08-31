@@ -11,6 +11,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory } from 'react-router-dom';
 
+import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import LocationControl from '../../components/LocationControl/LocationControl';
 import PhotoUploader from '../../components/PhotoUploader/PhotoUploader';
 import { hasAppUserToken } from '../../util/apiV2';
@@ -116,24 +117,32 @@ const BookingRequestPageV2 = props => {
 
   if (page.fetchBusinessInProgress) {
     return (
-      <div className={css.root}>
-        <p>Loading provider...</p>
-      </div>
+      <>
+        <TopbarContainer currentPage="BookingRequestPageV2" />
+        <div className={css.root}>
+          <p>Loading provider...</p>
+        </div>
+      </>
     );
   }
 
   if (page.fetchBusinessError || !page.business) {
     return (
-      <div className={css.root}>
-        <p className={css.errorText}>This provider could not be found.</p>
-      </div>
+      <>
+        <TopbarContainer currentPage="BookingRequestPageV2" />
+        <div className={css.root}>
+          <p className={css.errorText}>This provider could not be found.</p>
+        </div>
+      </>
     );
   }
 
   const { business } = page;
 
   return (
-    <div className={css.root}>
+    <>
+      <TopbarContainer currentPage="BookingRequestPageV2" />
+      <div className={css.root}>
       <h1 className={css.title}>Request {business.name}</h1>
       <p className={css.bio}>{business.bio}</p>
 
@@ -245,6 +254,7 @@ const BookingRequestPageV2 = props => {
         </button>
       </form>
     </div>
+    </>
   );
 };
 

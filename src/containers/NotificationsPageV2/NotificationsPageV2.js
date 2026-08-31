@@ -10,6 +10,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
+import TopbarContainer from '../TopbarContainer/TopbarContainer';
 
 import { hasAppUserToken } from '../../util/apiV2';
 import {
@@ -64,7 +65,9 @@ const NotificationsPageV2 = () => {
   const notifications = page.notifications || [];
 
   return (
-    <div className={css.root}>
+    <>
+      <TopbarContainer currentPage="NotificationsPageV2" />
+      <div className={css.root}>
       <div className={css.header}>
         <h1 className={css.title}>Notifications</h1>
         {page.unreadCount > 0 ? (
@@ -133,6 +136,7 @@ const NotificationsPageV2 = () => {
         })}
       </ul>
     </div>
+    </>
   );
 };
 

@@ -11,6 +11,7 @@
  */
 import React, { useEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
+import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { fetchMyBusinessV2Thunk, fetchInboxV2Thunk, setAcceptingJobsV2Thunk } from './ProviderInboxPageV2.duck';
@@ -58,17 +59,25 @@ const ProviderInboxPageV2 = () => {
   }, [dispatch]);
 
   if (page.fetchBusinessInProgress && !page.business) {
-    return <div className={css.root}><p>Loading your dashboard...</p></div>;
+    return (
+      <>
+        <TopbarContainer currentPage="ProviderInboxPageV2" />
+        <div className={css.root}><p>Loading your dashboard...</p></div>
+      </>
+    );
   }
 
   if (!page.business) {
     return (
-      <div className={css.root}>
-        <p>You don&apos;t have a provider profile yet.</p>
-        <a className={css.link} href="/provider-profile-v2">
-          Set up your provider profile
-        </a>
-      </div>
+      <>
+        <TopbarContainer currentPage="ProviderInboxPageV2" />
+        <div className={css.root}>
+          <p>You don&apos;t have a provider profile yet.</p>
+          <a className={css.link} href="/provider-profile-v2">
+            Set up your provider profile
+          </a>
+        </div>
+      </>
     );
   }
 
@@ -89,7 +98,9 @@ const ProviderInboxPageV2 = () => {
   const pastRequests = data.filter(b => ['declined', 'cancelled', 'paid_out'].includes(b.status));
 
   return (
-    <div className={css.root}>
+    <>
+      <TopbarContainer currentPage="ProviderInboxPageV2" />
+      <div className={css.root}>
       <div className={css.headerRow}>
         <h1 className={css.title}>{business.name}</h1>
         <label className={css.toggle}>
@@ -181,6 +192,7 @@ const ProviderInboxPageV2 = () => {
         </>
       )}
     </div>
+    </>
   );
 };
 
