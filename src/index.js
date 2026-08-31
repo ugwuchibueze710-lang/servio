@@ -150,14 +150,57 @@ if (typeof window !== 'undefined') {
 
   const preloadedState = window.__PRELOADED_STATE__ || '{}';
   const initialState = JSON.parse(preloadedState, sdkTypes.reviver);
-  const sdk = createInstance({
-    transitVerbose: appSettings.sdk.transitVerbose,
-    clientId: appSettings.sdk.clientId,
-    secure: appSettings.usingSSL,
-    typeHandlers: apiUtils.typeHandlers,
-    ...baseUrl,
-    ...assetCdnBaseUrl,
-  });
+
+  // This app is being migrated off Sharetribe onto its own /v2 Mongo+Stripe+Groq backend, and
+  // REACT_APP_SHARETRIBE_SDK_CLIENT_ID is no longer set in production. createInstance() throws
+  // SYNCHRONOUSLY ("clientId must be provided") when the client id is missing - not a promise
+  // rejection - and this call sits at module scope, outside any try/catch or promise chain. An
+  // uncaught throw here kills the rest of this file before configureStore()/render() ever run,
+  // which is exactly what caused a permanent blank page for every visitor (not just Sharetribe
+  // pages) once the credential was removed. The /v2 pages never touch `sdk` at all, so the fix
+  // is to make sdk creation itself resilient: fall back to a stub whose every property access
+  // and call returns another stub / a rejected promise, so every existing `sdk.xxx().catch(...)`
+  // already written throughout the legacy ducks (fetchCurrentUser, fetchAppAssets, authInfo,
+  // etc.) degrades the same honest way it already does for a live but failing Sharetribe API -
+  // never a fake success, just a caught rejection - instead of crashing the whole app.
+  const createDisabledSdkStub = () => {
+    const rejection = () =>
+      Promise.reject(
+        Object.assign(new Error('Sharetribe SDK is not configured (no client id set).'), {
+          status: 0,
+          statusText: 'sharetribe_sdk_unconfigured',
+        })
+      );
+    const handler = {
+      get: (target, prop) => {
+        if (typeof prop === 'symbol') {
+          return undefined;
+        }
+        return new Proxy(function stubMember() {}, handler);
+      },
+      apply: () => rejection(),
+      construct: () => ({}),
+    };
+    return new Proxy(function stubSdk() {}, handler);
+  };
+
+  let sdk;
+  try {
+    if (!appSettings.sdk.clientId) {
+      throw new Error('REACT_APP_SHARETRIBE_SDK_CLIENT_ID is not set.');
+    }
+    sdk = createInstance({
+      transitVerbose: appSettings.sdk.transitVerbose,
+      clientId: appSettings.sdk.clientId,
+      secure: appSettings.usingSSL,
+      typeHandlers: apiUtils.typeHandlers,
+      ...baseUrl,
+      ...assetCdnBaseUrl,
+    });
+  } catch (e) {
+    log.error(e, 'sharetribe-sdk-init-skipped');
+    sdk = createDisabledSdkStub();
+  }
 
   // Note: on localhost:3000, you need to use environment variable.
   const googleAnalyticsIdFromSSR = initialState?.hostedAssets?.googleAnalyticsId;
