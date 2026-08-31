@@ -14,6 +14,38 @@ const mongoose = require('mongoose');
 
 let connectPromise = null;
 
+// Runs once per process, right after the very first successful connection - not on every
+// connect() call, since connectPromise already memoizes the connection itself. Seeds the real
+// service-category list (server/scripts/seedCategoriesData.js - the same data
+// server/scripts/seedCategories.js seeds when run by hand) if and only if the categories
+// collection is genuinely empty, so this never overwrites categories an admin has since edited.
+//
+// Why this exists: MONGODB_URI can go from "unset"/"unreachable" to "connected" at any time -
+// a first-time setup, fixing an Atlas IP allow-list, rotating the connection string - and each
+// time, the live site would otherwise keep showing "no such category" until someone remembered
+// to SSH/shell in and run the seed script by hand. Free-tier Render has no shell/one-off-job
+// access at all, so "run it by hand" in practice meant asking whoever's deploying to run it
+// locally against the production database - real friction for zero benefit, since this data is
+// static and safe to seed automatically. Errors here are logged but never fatal: a failed seed
+// just means categories stay empty until the next successful connection, exactly like today.
+const seedCategoriesIfEmpty = async () => {
+  try {
+    // Lazy require: avoids a require-cycle risk if a model file ever imports this module.
+    const Category = require('../models/Category');
+    const existingCount = await Category.estimatedDocumentCount();
+    if (existingCount > 0) {
+      return;
+    }
+    const { seedCategories } = require('../scripts/seedCategoriesData');
+    const { created, updated, total } = await seedCategories(Category);
+    // eslint-disable-next-line no-console
+    console.log(`[mongo] auto-seeded categories: ${created} created, ${updated} updated, ${total} total`);
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[mongo] auto-seed categories failed:', err.message);
+  }
+};
+
 const connect = () => {
   const uri = process.env.MONGODB_URI;
   if (!uri) {
@@ -25,6 +57,7 @@ const connect = () => {
       .then(() => {
         // eslint-disable-next-line no-console
         console.log('[mongo] connected');
+        seedCategoriesIfEmpty();
         return mongoose.connection;
       })
       .catch(err => {
