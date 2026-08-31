@@ -23,7 +23,6 @@ import {
 import { includeCSSProperties } from './util/style';
 import { IncludeScripts } from './util/includeScripts';
 
-import { MaintenanceMode } from './components';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
@@ -101,29 +100,15 @@ const Configurations = props => {
   );
 };
 
-const MaintenanceModeError = props => {
-  const { locale, messages, helmetContext } = props;
-  return (
-    <IntlProvider locale={locale} messages={messages} textComponent="span">
-      <HelmetProvider context={helmetContext}>
-        <MaintenanceMode />
-      </HelmetProvider>
-    </IntlProvider>
-  );
-};
-
-// This app is being migrated off Sharetribe onto its own real /v2 Mongo+Stripe+Groq backend
-// (see server/index.js and server/apiRouter.js). appConfig.hasMandatoryConfigurations (above,
-// via src/util/configHelpers.js) only ever reflects Sharetribe Console hosted config - branding,
-// listingTypes, listingFields, transactionSize - none of which the /v2 pages read or need. Without
-// this check, a marketplace with no (or an invalid) Sharetribe client id would show
-// <MaintenanceMode/> for every single route, including the fully independent /v2 pages, which is
-// not an honest reflection of their actual state (they work fine). Every real /v2 route path
-// created for this rebuild uses a "-v2" path segment by convention (see the "-v2" routes in
-// src/routing/routeConfiguration.js), so that's used here as the real, checkable signal for
-// "this route doesn't depend on Sharetribe hosted config" rather than hard-coding the path list
-// in two places.
-const isMongoV2Route = pathname => typeof pathname === 'string' && /(^|\/)[^/]*-v2(\/|$)/.test(pathname);
+// Sharetribe is fully and permanently disabled (no client id is configured - see src/index.js's
+// createDisabledSdkStub()), so appConfig.hasMandatoryConfigurations - which only ever reflects
+// whether Sharetribe Console hosted config (branding, listingTypes, listingFields, transactionSize)
+// was fetched - will always be false. There used to be a <MaintenanceMode/> gate here for that
+// flag; removing it is intentional, not an oversight: mergeConfig() (src/util/configHelpers.js)
+// already falls back to this codebase's own local defaultConfig for every one of those fields when
+// hosted config isn't available, so the app renders using its own real config either way. Blocking
+// every route behind a check that only ever meant "Sharetribe Console isn't configured" would be
+// dishonest here, since Sharetribe isn't used at all anymore.
 
 // This displays a warning if environment variable key contains a string "SECRET"
 const EnvironmentVariableWarning = props => {
@@ -206,18 +191,6 @@ export const ClientApp = props => {
     }
   }
 
-  // Show MaintenanceMode if the mandatory configurations are not available - unless this is one
-  // of the real /v2 routes, which don't depend on Sharetribe hosted config at all (see
-  // isMongoV2Route's comment above).
-  if (!appConfig.hasMandatoryConfigurations && !isMongoV2Route(window?.location?.pathname)) {
-    return (
-      <MaintenanceModeError
-        locale={appConfig.localization.locale}
-        messages={{ ...localeMessages, ...hostedTranslations }}
-      />
-    );
-  }
-
   // Marketplace color and the color for <PrimaryButton> come from configs
   // If set, we need to create CSS Property and set it to DOM (documentElement is selected here)
   // This provides marketplace color for everything under <html> tag (including modals/portals)
@@ -265,19 +238,6 @@ export const ServerApp = props => {
   HelmetProvider.canUseDOM = false;
 
   const initialPathname = new URL(url, 'http://example.com')?.pathname;
-
-  // Show MaintenanceMode if the mandatory configurations are not available - unless this is one
-  // of the real /v2 routes, which don't depend on Sharetribe hosted config at all (see
-  // isMongoV2Route's comment above).
-  if (!appConfig.hasMandatoryConfigurations && !isMongoV2Route(initialPathname)) {
-    return (
-      <MaintenanceModeError
-        locale={appConfig.localization.locale}
-        messages={{ ...localeMessages, ...hostedTranslations }}
-        helmetContext={helmetContext}
-      />
-    );
-  }
 
   return (
     <Configurations appConfig={appConfig}>
