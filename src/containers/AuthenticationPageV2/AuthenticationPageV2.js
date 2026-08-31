@@ -20,14 +20,24 @@ import css from './AuthenticationPageV2.module.css';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const AuthenticationPageV2 = () => {
+const AuthenticationPageV2 = props => {
   const dispatch = useDispatch();
   const history = useHistory();
   const location = useLocation();
   const page = useSelector(state => state.AuthenticationPageV2);
 
   const params = new URLSearchParams(location.search);
-  const initialTab = params.get('tab') === 'signup' ? 'signup' : 'login';
+  // An explicit ?tab= query param always wins; otherwise fall back to extraProps.initialTab
+  // (set by the /login and /signup route entries in routeConfiguration.js, now that those
+  // routes point here instead of the legacy Sharetribe AuthenticationPage), then to 'login'.
+  const initialTab =
+    params.get('tab') === 'signup'
+      ? 'signup'
+      : params.get('tab') === 'login'
+      ? 'login'
+      : props.initialTab === 'signup'
+      ? 'signup'
+      : 'login';
   const [tab, setTab] = useState(initialTab);
 
   const [firstName, setFirstName] = useState('');

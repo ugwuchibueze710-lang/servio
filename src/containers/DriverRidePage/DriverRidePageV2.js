@@ -16,8 +16,10 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 
 import { rideStatuses, DRIVER_NEXT_STATUS } from '../../ride/rideProcessV2';
+import { hasAppUserToken } from '../../util/apiV2';
 import {
   fetchOwnDriverV2Thunk,
   setOnlineStatusV2Thunk,
@@ -92,11 +94,22 @@ const NEXT_STATUS_LABEL = {
 
 const DriverRidePageV2 = () => {
   const dispatch = useDispatch();
+  const history = useHistory();
   const driverPage = useSelector(state => state.DriverRidePageV2);
 
   const activeRide = driverPage.activeRide;
   const isOnTrip = !!activeRide;
   const odometer = useTripOdometer(activeRide?.status === rideStatuses.TRIP_STARTED);
+
+  // Sharetribe's auth:true route gate (state.auth.isAuthenticated) is gone from this route -
+  // see routeConfiguration.js's comment on this route entry - since that state can never become
+  // true anymore. Redirect on mount if there's no real v2 session, mirroring the pattern already
+  // used by BookingRequestPageV2.js.
+  useEffect(() => {
+    if (!hasAppUserToken()) {
+      history.push(`/auth-v2?returnTo=${encodeURIComponent(window.location.pathname)}`);
+    }
+  }, [history]);
 
   useEffect(() => {
     dispatch(fetchOwnDriverV2Thunk());

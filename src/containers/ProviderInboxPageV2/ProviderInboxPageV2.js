@@ -10,10 +10,11 @@
  * booking's status forward.
  */
 import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { fetchMyBusinessV2Thunk, fetchInboxV2Thunk, setAcceptingJobsV2Thunk } from './ProviderInboxPageV2.duck';
+import { hasAppUserToken } from '../../util/apiV2';
 
 import css from './ProviderInboxPageV2.module.css';
 
@@ -38,7 +39,18 @@ const formatHours = ms => {
 
 const ProviderInboxPageV2 = () => {
   const dispatch = useDispatch();
+  const history = useHistory();
   const page = useSelector(state => state.ProviderInboxPageV2);
+
+  // Sharetribe's auth:true route gate (state.auth.isAuthenticated) is gone from this route -
+  // see routeConfiguration.js's comment on this route entry - since that state can never become
+  // true anymore. Redirect on mount if there's no real v2 session, mirroring the pattern already
+  // used by BookingRequestPageV2.js.
+  useEffect(() => {
+    if (!hasAppUserToken()) {
+      history.push(`/auth-v2?returnTo=${encodeURIComponent(window.location.pathname)}`);
+    }
+  }, [history]);
 
   useEffect(() => {
     dispatch(fetchMyBusinessV2Thunk());

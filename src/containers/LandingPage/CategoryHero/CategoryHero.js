@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 
-import { useConfiguration } from '../../../context/configurationContext';
 import { useRouteConfiguration } from '../../../context/routeConfigurationContext';
 import { createResourceLocatorString } from '../../../util/routes';
-import { isOriginInUse } from '../../../util/search';
 import { useIntl } from '../../../util/reactIntl';
 
 import {
@@ -137,7 +135,6 @@ const normalizeApiCategory = apiCategory => ({
 const CategoryHero = () => {
   const history = useHistory();
   const routeConfiguration = useRouteConfiguration();
-  const config = useConfiguration();
   const intl = useIntl();
 
   const [query, setQuery] = useState('');
@@ -211,26 +208,27 @@ const CategoryHero = () => {
   );
 
   const goToCategory = category => {
+    // Sharetribe is fully disabled now (see src/index.js's createDisabledSdkStub()), so the
+    // legacy 'RidePage'/'SearchPage' routes below (both backed by the Sharetribe SDK) can never
+    // load real data anymore. Route to the real, Mongo-backed replacements instead:
+    // 'RidePageV2' (src/containers/RidePageV2) and 'ProviderSearchPageV2'
+    // (/providers-v2/:categorySlug, src/containers/ProviderSearchPageV2) - both already built
+    // and tested per MIGRATION_PLAN.md, just not linked from the homepage until now.
+    // ProviderSearchPageV2 has its own in-page "search near me" location control, so unlike the
+    // old SearchPage call there's no bounds/address/origin to forward here - just the category.
     if (category.id === 'ride' || category.isRideCategory) {
-      history.push(createResourceLocatorString('RidePage', routeConfiguration, {}, {}));
+      history.push(createResourceLocatorString('RidePageV2', routeConfiguration, {}, {}));
       return;
     }
 
-    const searchParams = { pub_categoryLevel1: category.id };
-
-    if (location?.selectedPlace) {
-      const {
-        search,
-        selectedPlace: { origin, bounds },
-      } = location;
-      searchParams.bounds = bounds;
-      searchParams.address = search;
-      if (isOriginInUse(config) && origin) {
-        searchParams.origin = `${origin.lat},${origin.lng}`;
-      }
-    }
-
-    history.push(createResourceLocatorString('SearchPage', routeConfiguration, {}, searchParams));
+    history.push(
+      createResourceLocatorString(
+        'ProviderSearchPageV2',
+        routeConfiguration,
+        { categorySlug: category.id },
+        {}
+      )
+    );
   };
 
   return (

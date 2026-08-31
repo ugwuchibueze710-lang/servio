@@ -30,9 +30,30 @@ export const LandingPageComponent = props => {
   // here anymore. We still pass `meta` through untouched so page title/description/social-share
   // tags keep working. Nothing about the hosted asset itself changes; a marketplace operator
   // could still re-enable it by rendering `sections` again here.
+  //
+  // Sharetribe is fully disabled now (see src/index.js's createDisabledSdkStub()), so the fetch
+  // this page used to do for its hosted "landing-page" asset (LandingPage.duck.js) will always
+  // fail with a "SDK is not configured" error, never a real 404 or real content. Below,
+  // PageBuilder treats "no pageAssetsData + an error" as a reason to render `fallbackPage`
+  // instead of the real page (see PageBuilder.js) - that's the right behavior for a genuinely
+  // broken hosted-asset fetch, but not for a hosted CMS we've deliberately stopped using. So when
+  // there's no real fetched data, we hand PageBuilder real local defaults (empty sections, since
+  // we don't render CMS sections anyway, plus a plain local page title/description) instead of
+  // leaving pageAssetsData empty - that keeps the actual homepage (header, CategoryHero, footer)
+  // rendering normally rather than falling back to a bare "something went wrong" page.
+  const localDefaultLandingPageData = {
+    sections: [],
+    meta: {
+      pageTitle: { fieldType: 'metaTitle', content: 'Home page' },
+      pageDescription: {
+        fieldType: 'metaDescription',
+        content: 'Find and book local service providers near you.',
+      },
+    },
+  };
   const landingPageDataWithoutMarketingSections = landingPageData
     ? { ...landingPageData, sections: [] }
-    : landingPageData;
+    : localDefaultLandingPageData;
 
   return (
     <PageBuilder

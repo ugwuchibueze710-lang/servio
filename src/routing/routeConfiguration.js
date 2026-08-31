@@ -312,15 +312,15 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     {
       path: '/ride-v2',
       name: 'RidePageV2',
-      auth: true,
-      authPage: 'LoginPage',
+      // No Sharetribe auth:true gate - see the /login route's comment above. This page
+      // self-checks hasAppUserToken() and links to AuthenticationPageV2 if signed out.
       component: RidePageV2,
     },
     {
       path: '/drive-v2',
       name: 'DriverRidePageV2',
-      auth: true,
-      authPage: 'LoginPage',
+      // No Sharetribe auth:true gate - see the /login route's comment above. This page
+      // self-checks hasAppUserToken() and links to AuthenticationPageV2 if signed out.
       component: DriverRidePageV2,
     },
 
@@ -375,22 +375,22 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     {
       path: '/book-v2/:businessId',
       name: 'BookingRequestPageV2',
-      auth: true,
-      authPage: 'LoginPage',
+      // No Sharetribe auth:true gate - see the /login route's comment above. This page
+      // self-checks hasAppUserToken() and links to AuthenticationPageV2 if signed out.
       component: BookingRequestPageV2,
     },
     {
       path: '/my-bookings-v2',
       name: 'MyBookingsPageV2',
-      auth: true,
-      authPage: 'LoginPage',
+      // No Sharetribe auth:true gate - see the /login route's comment above. This page
+      // self-checks hasAppUserToken() and links to AuthenticationPageV2 if signed out.
       component: MyBookingsPageV2,
     },
     {
       path: '/provider-inbox-v2',
       name: 'ProviderInboxPageV2',
-      auth: true,
-      authPage: 'LoginPage',
+      // No Sharetribe auth:true gate - see the /login route's comment above. This page
+      // self-checks hasAppUserToken() and links to AuthenticationPageV2 if signed out.
       component: ProviderInboxPageV2,
     },
 
@@ -400,22 +400,30 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     {
       path: '/login',
       name: 'LoginPage',
-      component: AuthenticationPage,
-      extraProps: { tab: 'login' },
+      // Sharetribe is fully disabled (see src/index.js's createDisabledSdkStub()), so the real,
+      // working sign-in is AuthenticationPageV2 (JWT-backed AppUser accounts, /auth-v2's own
+      // component) - not the legacy Sharetribe AuthenticationPage, which can never succeed
+      // anymore. extraProps.initialTab sets the default tab; AuthenticationPageV2 still honors
+      // an explicit ?tab= query param if one is present.
+      component: AuthenticationPageV2,
+      extraProps: { initialTab: 'login' },
     },
     {
       path: '/signup',
       name: 'SignupPage',
-      component: AuthenticationPage,
-      extraProps: { tab: 'signup' },
-      loadData: pageDataLoadingAPI.AuthenticationPage.loadData,
+      // See the /login route above for why this points at AuthenticationPageV2 now. No loadData
+      // here - AuthenticationPageV2 doesn't need Sharetribe's page-asset preload.
+      component: AuthenticationPageV2,
+      extraProps: { initialTab: 'signup' },
     },
     {
       path: '/signup/:userType',
       name: 'SignupForUserTypePage',
-      component: AuthenticationPage,
-      extraProps: { tab: 'signup' },
-      loadData: pageDataLoadingAPI.AuthenticationPage.loadData,
+      // AuthenticationPageV2 deliberately has no per-role signup choice (see its own file
+      // header) - every account starts in customer mode and enables provider mode later from
+      // the account menu - so this now renders the same page as /signup and ignores :userType.
+      component: AuthenticationPageV2,
+      extraProps: { initialTab: 'signup' },
     },
     {
       path: '/confirm',

@@ -7,10 +7,11 @@
  * dispute, review - so there is exactly one place that drives a booking forward.
  */
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { fetchMyBookingsV2Thunk, fetchSavedProvidersV2Thunk, unsaveProviderV2Thunk } from './MyBookingsPageV2.duck';
+import { hasAppUserToken } from '../../util/apiV2';
 
 import css from './MyBookingsPageV2.module.css';
 
@@ -31,10 +32,21 @@ const ACTIVE_STATUSES = ['requested', 'accepted', 'scheduled', 'in_progress', 'c
 
 const MyBookingsPageV2 = () => {
   const dispatch = useDispatch();
+  const history = useHistory();
   const location = useLocation();
   const page = useSelector(state => state.MyBookingsPageV2);
   const params = new URLSearchParams(location.search);
   const [tab, setTab] = useState(params.get('tab') === 'saved' ? 'saved' : 'requests');
+
+  // Sharetribe's auth:true route gate (state.auth.isAuthenticated) is gone from this route -
+  // see routeConfiguration.js's comment on this route entry - since that state can never become
+  // true anymore. Redirect on mount if there's no real v2 session, mirroring the pattern already
+  // used by BookingRequestPageV2.js.
+  useEffect(() => {
+    if (!hasAppUserToken()) {
+      history.push(`/auth-v2?returnTo=${encodeURIComponent(window.location.pathname)}`);
+    }
+  }, [history]);
 
   useEffect(() => {
     dispatch(fetchMyBookingsV2Thunk());
